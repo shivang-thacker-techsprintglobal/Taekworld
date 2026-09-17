@@ -1,0 +1,160 @@
+---
+description: Mandatory feature-first Clean Architecture, design system, and placement rules for all Taekworld Flutter work
+alwaysApply: true
+---
+
+# Taekworld Flutter Architecture Rules
+
+These rules are **mandatory** for all code generation, modification, refactoring, and new features.
+
+The **existing project architecture is the source of truth**. Inspect and reuse it before creating anything new. Do not introduce a new pattern when an existing one already solves the requirement. Do not over-engineer.
+
+## Stack (do not replace)
+
+- Feature-first Clean Architecture
+- Riverpod only (no Provider/Bloc/GetX/MobX)
+- Dio for networking
+- Freezed where it adds real value
+- Centralized design system under `lib/config/`
+
+## Before any change
+
+1. Inspect the existing folder structure.
+2. Search for similar functionality.
+3. Check `config/` for colors, text styles, sizes, scale, assets, theme.
+4. Check `core/` for network, errors, utils, extensions, shared widgets.
+5. Check the relevant feature for models, repos, datasources, controllers, screens, widgets.
+6. Reuse when reasonable. Create a new file only when nothing existing fits.
+
+Never create a file just because the requirement “sounds like” it needs one.
+
+## Design system (single source of truth)
+
+```text
+lib/config/
+├── app_colors.dart
+├── app_scale.dart
+├── app_size.dart
+├── app_text_style.dart
+├── app_assets.dart
+└── app_theme.dart
+```
+
+Do **not** create alternate color/typography/spacing/responsive/asset/theme systems (e.g. `login_colors.dart`, `profile_text_style.dart`).
+
+| Need | Do this |
+| --- | --- |
+| Color | Check `AppColors` → reuse or add semantic color → use it. Never `Color(0xFF…)` for design values in feature UI. |
+| Text style | Check `AppTextStyle` → reuse or add semantic style. Avoid ad-hoc `TextStyle(fontSize: 17, …)`. |
+| Spacing / radius / icon / component size | Check `AppSize` + `AppScale`. Add a token only if it is a **meaningful reusable** token — not `size17`/`size18`/`size19`. |
+| Responsive | Use `AppScale` only. No feature-specific scalers. Don’t blindly scale every dimension; respect text scale and min touch targets. |
+| Asset | Add path to `AppAssets` → `Image.asset(AppAssets.logo)`. No scattered path strings. |
+| Material defaults | Configure via `AppTheme`, reusing `AppColors` / `AppTextStyle` / `AppSize` / `AppScale`. Do not duplicate tokens. |
+
+Hardcoded local values are OK when truly one-off and not design-system material. Centralize colors, typography, common spacing/radii/icons, assets, and global Material styling.
+
+## Feature structure
+
+All feature code lives under `lib/features/<feature_name>/`:
+
+```text
+feature_name/
+├── data/
+│   ├── datasources/   # API / local access
+│   ├── models/        # request/response DTOs (Freezed + *.g.dart beside source)
+│   └── repositories/  # implementations
+├── domain/
+│   ├── entities/      # business objects
+│   └── repositories/  # abstract contracts
+├── application/
+│   └── controllers/   # Riverpod controllers + state
+└── presentation/
+    ├── screens/
+    └── widgets/       # feature-specific UI
+```
+
+Create **only the layers actually required**. UI-only features do not need datasources/repos.
+
+### Dependency direction
+
+```text
+Presentation → Application → Domain ← Data
+```
+
+Forbidden: Widget → Dio / API / repository implementation.
+
+Required: Widget → Controller → Repository contract ← Repository impl → Datasource → Dio.
+
+- **Domain**: no Dio, API clients, datasources, widgets, or presentation.
+- **Controllers**: user actions, repo calls, loading/success/error state. No UI layout. No direct API/Dio. Depend on repository abstractions.
+- **Screens**: compose UI, watch controllers, navigation UI, display states. No business/API logic.
+- **Feature widgets**: stay in `presentation/widgets/`.
+
+## Core vs feature widgets
+
+`lib/core/widgets/` is **only** for genuinely app-wide reusable components (`AppButton`, `AppTextField`, `AppLoader`, `AppErrorView`, `AppEmptyView`, …).
+
+- Not feature-named (`login_button`, `lead_card`) in `core/`.
+- Do **not** move to `core/` merely because something is used twice.
+- If a feature widget later becomes reusable across **unrelated** features: remove feature-specific deps, make the API generic, move to `core/widgets/`, update imports. **Never duplicate** the same widget across features.
+
+Other `core/` placement:
+
+- `core/network/` — shared Dio/client/interceptors/exceptions (not feature endpoints)
+- `core/utils/`, `core/extensions/`, `core/errors/`, `core/constants/` — focused files, not a dumping-ground `helpers.dart` / `common.dart`
+- Feature API calls stay in `features/<feature>/data/datasources/`
+
+Do **not** introduce a generic `common/` folder.
+
+## Networking & Riverpod & Freezed
+
+- One shared Dio setup via existing `core/network/` client + interceptors.
+- Feature endpoints only in feature datasources.
+- Search for an existing provider before adding one; keep feature providers in that feature’s `application/`.
+- Freezed for API models, immutable/union state when valuable — not everywhere.
+- Never hand-edit `*.freezed.dart` / `*.g.dart`; edit source and regenerate.
+
+## Where new code goes
+
+| Kind | Location |
+| --- | --- |
+| API endpoint | `feature/data/datasources/` |
+| Request/response model | `feature/data/models/` |
+| Entity | `feature/domain/entities/` |
+| Repo contract | `feature/domain/repositories/` |
+| Repo impl | `feature/data/repositories/` |
+| State/controller | `feature/application/controllers/` |
+| Screen | `feature/presentation/screens/` |
+| Feature widget | `feature/presentation/widgets/` |
+| App-wide widget | `core/widgets/` |
+| Utility / extension | `core/utils/` / `core/extensions/` |
+| Color / type / size / scale / asset / theme | matching `config/app_*.dart` |
+
+## New feature workflow
+
+1. Understand UI, API, data, rules, state, navigation, reuse needs.
+2. Inspect similar features and existing patterns/design tokens/core widgets.
+3. Decide which layers are **actually** needed.
+4. When API is involved: Datasource → models → repo impl + contract → controller → screen → widgets.
+5. UI always goes through the design system first (colors/styles/sizes/assets).
+6. Prefer `core/widgets/` and the feature’s existing widgets before inventing new ones.
+7. Validate: architecture boundaries, no hardcoded design tokens, loading/error/success, Freezed codegen if needed, format/analyze.
+
+## Modifying existing code
+
+- Smallest clean change; preserve architecture.
+- Do not refactor/rename/move unrelated code.
+- Do not change behavior beyond the task.
+- Fix rule violations only when they block the requested work or are directly in scope.
+
+## Architecture over convenience
+
+When convenience conflicts with architecture, **prefer architecture**. Consistency matters more than a one-off shortcut.
+
+Example reasoning:
+
+- “Forgot password” + API → datasources/models/repos/controller/screens/widgets as needed.
+- “Button color #xxxxxx” → `AppColors` first, not a raw color in the widget.
+- “20px gap” → `AppSize` / `AppScale`.
+- “New heading” → `AppTextStyle`.
+- “Common loader” → `core/widgets/`.
