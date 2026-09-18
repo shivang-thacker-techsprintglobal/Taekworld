@@ -11,6 +11,15 @@ abstract final class AppColors {
   static const Color secondary = Color(0xFF001A57);
   static const Color tertiary = Color(0xFFFF9800);
 
+  // Accents per UI-SPEC §3.1
+  static const Color accentOrange = Color(0xFFFF9800); // 7-day trial, "new" pills
+  static const Color accentGreen = Color(0xFF4CAF50); // 30-day trial, new students
+  static const Color accentBlue = Color(0xFF2196F3); // Current students, links, unread
+  static const Color accentBlueDark = Color(0xFF1976D2); // Gradient end, links
+  static const Color accentPurple = Color(0xFF9C27B0); // Recommendations
+  static const Color accentYellow = Color(0xFFFFEB3B); // "NEW" highlight
+  static const Color accentRed = Color(0xFFB00000); // 30-day trial stat card accent
+
   // Surfaces
   static const Color background = Color(0xFFFAFAFA);
   static const Color surface = Color(0xFFFFFFFF);

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/exceptions/network_exceptions.dart';
 import '../../domain/entities/user_entity.dart';
@@ -18,6 +19,23 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
+    if (AppConstants.useMockData) {
+      // Simulate quick network latency for realistic UI feedback
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      return UserEntity(
+        id: '5688',
+        email: email.isNotEmpty ? email : 'master@example.com',
+        name: 'Master Kim',
+        token: 'mock_bearer_token',
+        academyId: '5688',
+        academyName: 'Taekworld Academy',
+        phoneNumber: '7037601000',
+        status: 'Active',
+        statusText: 'Active',
+        role: 'master',
+      );
+    }
+
     try {
       final response = await _remote.login(
         LoginRequest(email: email, password: password),

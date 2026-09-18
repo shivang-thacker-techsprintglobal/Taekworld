@@ -5,9 +5,10 @@ import '../../../../config/app_colors.dart';
 import '../../../../config/app_scale.dart';
 import '../../../../config/app_size.dart';
 import '../../../../config/app_text_style.dart';
-import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/providers/current_user_provider.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/inline_error_box.dart';
+import '../../../main_shell/presentation/screens/main_shell_screen.dart';
 import '../../application/controllers/login_controller.dart';
 import '../../application/controllers/login_state.dart';
 import '../widgets/login_footer.dart';
@@ -24,8 +25,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: 'master@taekworld.com');
+  final _passwordController = TextEditingController(text: '123456');
   bool _obscurePassword = true;
 
   @override
@@ -50,7 +51,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<LoginState>(loginControllerProvider, (previous, next) {
       next.whenOrNull(
         success: (user) {
-          context.showSnackBar('Welcome, ${user.name}');
+          ref.read(currentUserProvider.notifier).state = user;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) => const MainShellScreen(),
+            ),
+          );
         },
       );
     });
