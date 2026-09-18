@@ -1,0 +1,754 @@
+{
+  "info": {
+    "_postman_id": "c281699c-3344-4627-8ade-3bd31a32651b",
+    "name": "Taekworld Master App API",
+    "description": "Backend calls used by the Taekworld Master mobile app (masters). Run '1. Auth / Login' first: it stores token, dojangId, userId and masterPhone in the environment. See 02-API-INTEGRATION.md for response shapes and error codes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Anonymous. Expect {status:'API healthy', timestamp}.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Auth",
+                "login"
+              ]
+            },
+            "description": "Stores token/refreshToken/dojangId/userId/masterPhone. Server does not enforce role yet: check user.roles contains 'master'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"master\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "pm.test('login ok', () => pm.expect(b.success).to.eql(true));",
+                  "if (b.token) pm.environment.set('token', b.token);",
+                  "if (b.refreshToken) pm.environment.set('refreshToken', b.refreshToken);",
+                  "if (b.user) { pm.environment.set('dojangId', String(b.user.academyId || '')); pm.environment.set('userId', b.user.uid || ''); pm.environment.set('masterPhone', (b.user.phoneNumber||'').replace(/\\D/g,'')); }",
+                  "pm.test('account is a master', () => pm.expect((b.user && b.user.roles || []).map(r=>String(r).toLowerCase())).to.include('master'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Auth",
+                "refresh-token"
+              ]
+            },
+            "description": "Access token lives 60 min; refresh before expiresAt or on 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json(); if (b.token) pm.environment.set('token', b.token); if (b.refreshToken) pm.environment.set('refreshToken', b.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profile (session check)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Auth",
+                "profile"
+              ]
+            },
+            "description": "Same shape as login. 401 = session gone."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Dashboard",
+      "item": [
+        {
+          "name": "Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/TrialMember/statistics/{{dojangId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "TrialMember",
+                "statistics",
+                "{{dojangId}}"
+              ]
+            },
+            "description": "{currentStudents, sevenDaysTrial, thirtyDaysTrial, newStudents, totalMembers, recommendationCount}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Applications",
+      "item": [
+        {
+          "name": "List (pending + enrolled)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/NewStudent/applications/{{dojangId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "NewStudent",
+                "applications",
+                "{{dojangId}}"
+              ]
+            },
+            "description": "Stores the first application id. 403 code MASTER_TOOL_LOCKED possible."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json(); const first = (b.pendingApplications||[])[0] || (b.enrolledApplications||[])[0]; if (first) pm.environment.set('applicationId', String(first.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/NewStudent/application/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "NewStudent",
+                "application",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "StudentApplicationDetailDto; first read marks it viewed."
+          }
+        },
+        {
+          "name": "Enroll (not used by app v1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/TrialMember/enroll/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "TrialMember",
+                "enroll",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "App v1 opens https://www.blackbelthw.com/master/newstudent instead. Real side effects ($150 fee flow) - use on UAT only.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enrollmentDate\": \"{{$isoTimestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Trial members",
+      "item": [
+        {
+          "name": "7-day trial students",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/TrialMember/students/{{dojangId}}?category=7 days trial",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "TrialMember",
+                "students",
+                "{{dojangId}}"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "7 days trial"
+                }
+              ]
+            },
+            "description": "Bare array of StudentMemberDto."
+          }
+        },
+        {
+          "name": "30-day trial students",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/TrialMember/students/{{dojangId}}?category=30 days trial",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "TrialMember",
+                "students",
+                "{{dojangId}}"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "30 days trial"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "New trials (not yet notified)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/TrialMemberNotification/new-trials/{{dojangId}}?userId={{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "TrialMemberNotification",
+                "new-trials",
+                "{{dojangId}}"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Mark trials notified",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/TrialMemberNotification/mark-notified",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "TrialMemberNotification",
+                "mark-notified"
+              ]
+            },
+            "description": "dojangId must be sent as a number in real clients.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\n    \"<userId from new-trials>\"\n  ],\n  \"masterId\": \"{{userId}}\",\n  \"dojangId\": \"{{dojangId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Check updates since",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/TrialMemberNotification/check-updates/{{dojangId}}?userId={{userId}}&lastCheckTime={{lastCheckTime}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "TrialMemberNotification",
+                "check-updates",
+                "{{dojangId}}"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "lastCheckTime",
+                  "value": "{{lastCheckTime}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Notification history (7 days)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/TrialMemberNotification/history/{{dojangId}}?userId={{userId}}&days=7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "TrialMemberNotification",
+                "history",
+                "{{dojangId}}"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "days",
+                  "value": "7"
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Counters",
+      "item": [
+        {
+          "name": "New registrations count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/NewStudent/registration-count/{{dojangId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "NewStudent",
+                "registration-count",
+                "{{dojangId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Parent invitations count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Recommendation/invitation-count/{{dojangId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Recommendation",
+                "invitation-count",
+                "{{dojangId}}"
+              ]
+            },
+            "description": "Requires a verified master association; else 403."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Push (FCM)",
+      "item": [
+        {
+          "name": "Register device",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Notification/register-device",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Notification",
+                "register-device"
+              ]
+            },
+            "description": "dojangId is an int in real clients. Upserts by fcmToken.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fcmToken\": \"{{fcmToken}}\",\n  \"platform\": \"ios\",\n  \"dojangId\": \"{{dojangId}}\",\n  \"deviceInfo\": \"Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete device (logout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Notification/delete-device",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Notification",
+                "delete-device"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fcmToken\": \"{{fcmToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Pending notifications (catch-up)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Notification/pending/{{dojangId}}?deviceId={{deviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Notification",
+                "pending",
+                "{{dojangId}}"
+              ],
+              "query": [
+                {
+                  "key": "deviceId",
+                  "value": "{{deviceId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Mark delivered",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Notification/mark-delivered",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Notification",
+                "mark-delivered"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notificationIds\": [\n    0\n  ],\n  \"deviceId\": \"{{deviceId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Acknowledge one",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Notification/acknowledge/{{notificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Notification",
+                "acknowledge",
+                "{{notificationId}}"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ]
+}

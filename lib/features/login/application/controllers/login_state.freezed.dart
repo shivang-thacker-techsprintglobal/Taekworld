@@ -20,6 +20,7 @@ mixin _$LoginState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
+    required TResult Function() checkingSession,
     required TResult Function() loading,
     required TResult Function(UserEntity user) success,
     required TResult Function(String message) error,
@@ -27,6 +28,7 @@ mixin _$LoginState {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
+    TResult? Function()? checkingSession,
     TResult? Function()? loading,
     TResult? Function(UserEntity user)? success,
     TResult? Function(String message)? error,
@@ -34,6 +36,7 @@ mixin _$LoginState {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
+    TResult Function()? checkingSession,
     TResult Function()? loading,
     TResult Function(UserEntity user)? success,
     TResult Function(String message)? error,
@@ -42,6 +45,7 @@ mixin _$LoginState {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(LoginInitial value) initial,
+    required TResult Function(LoginCheckingSession value) checkingSession,
     required TResult Function(LoginLoading value) loading,
     required TResult Function(LoginSuccess value) success,
     required TResult Function(LoginError value) error,
@@ -49,6 +53,7 @@ mixin _$LoginState {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(LoginInitial value)? initial,
+    TResult? Function(LoginCheckingSession value)? checkingSession,
     TResult? Function(LoginLoading value)? loading,
     TResult? Function(LoginSuccess value)? success,
     TResult? Function(LoginError value)? error,
@@ -56,6 +61,7 @@ mixin _$LoginState {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(LoginInitial value)? initial,
+    TResult Function(LoginCheckingSession value)? checkingSession,
     TResult Function(LoginLoading value)? loading,
     TResult Function(LoginSuccess value)? success,
     TResult Function(LoginError value)? error,
@@ -129,6 +135,7 @@ class _$LoginInitialImpl implements LoginInitial {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
+    required TResult Function() checkingSession,
     required TResult Function() loading,
     required TResult Function(UserEntity user) success,
     required TResult Function(String message) error,
@@ -140,6 +147,7 @@ class _$LoginInitialImpl implements LoginInitial {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
+    TResult? Function()? checkingSession,
     TResult? Function()? loading,
     TResult? Function(UserEntity user)? success,
     TResult? Function(String message)? error,
@@ -151,6 +159,7 @@ class _$LoginInitialImpl implements LoginInitial {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
+    TResult Function()? checkingSession,
     TResult Function()? loading,
     TResult Function(UserEntity user)? success,
     TResult Function(String message)? error,
@@ -166,6 +175,7 @@ class _$LoginInitialImpl implements LoginInitial {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(LoginInitial value) initial,
+    required TResult Function(LoginCheckingSession value) checkingSession,
     required TResult Function(LoginLoading value) loading,
     required TResult Function(LoginSuccess value) success,
     required TResult Function(LoginError value) error,
@@ -177,6 +187,7 @@ class _$LoginInitialImpl implements LoginInitial {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(LoginInitial value)? initial,
+    TResult? Function(LoginCheckingSession value)? checkingSession,
     TResult? Function(LoginLoading value)? loading,
     TResult? Function(LoginSuccess value)? success,
     TResult? Function(LoginError value)? error,
@@ -188,6 +199,7 @@ class _$LoginInitialImpl implements LoginInitial {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(LoginInitial value)? initial,
+    TResult Function(LoginCheckingSession value)? checkingSession,
     TResult Function(LoginLoading value)? loading,
     TResult Function(LoginSuccess value)? success,
     TResult Function(LoginError value)? error,
@@ -202,6 +214,132 @@ class _$LoginInitialImpl implements LoginInitial {
 
 abstract class LoginInitial implements LoginState {
   const factory LoginInitial() = _$LoginInitialImpl;
+}
+
+/// @nodoc
+abstract class _$$LoginCheckingSessionImplCopyWith<$Res> {
+  factory _$$LoginCheckingSessionImplCopyWith(
+    _$LoginCheckingSessionImpl value,
+    $Res Function(_$LoginCheckingSessionImpl) then,
+  ) = __$$LoginCheckingSessionImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$LoginCheckingSessionImplCopyWithImpl<$Res>
+    extends _$LoginStateCopyWithImpl<$Res, _$LoginCheckingSessionImpl>
+    implements _$$LoginCheckingSessionImplCopyWith<$Res> {
+  __$$LoginCheckingSessionImplCopyWithImpl(
+    _$LoginCheckingSessionImpl _value,
+    $Res Function(_$LoginCheckingSessionImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of LoginState
+  /// with the given fields replaced by the non-null parameter values.
+}
+
+/// @nodoc
+
+class _$LoginCheckingSessionImpl implements LoginCheckingSession {
+  const _$LoginCheckingSessionImpl();
+
+  @override
+  String toString() {
+    return 'LoginState.checkingSession()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$LoginCheckingSessionImpl);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() checkingSession,
+    required TResult Function() loading,
+    required TResult Function(UserEntity user) success,
+    required TResult Function(String message) error,
+  }) {
+    return checkingSession();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? checkingSession,
+    TResult? Function()? loading,
+    TResult? Function(UserEntity user)? success,
+    TResult? Function(String message)? error,
+  }) {
+    return checkingSession?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? checkingSession,
+    TResult Function()? loading,
+    TResult Function(UserEntity user)? success,
+    TResult Function(String message)? error,
+    required TResult orElse(),
+  }) {
+    if (checkingSession != null) {
+      return checkingSession();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LoginInitial value) initial,
+    required TResult Function(LoginCheckingSession value) checkingSession,
+    required TResult Function(LoginLoading value) loading,
+    required TResult Function(LoginSuccess value) success,
+    required TResult Function(LoginError value) error,
+  }) {
+    return checkingSession(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LoginInitial value)? initial,
+    TResult? Function(LoginCheckingSession value)? checkingSession,
+    TResult? Function(LoginLoading value)? loading,
+    TResult? Function(LoginSuccess value)? success,
+    TResult? Function(LoginError value)? error,
+  }) {
+    return checkingSession?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LoginInitial value)? initial,
+    TResult Function(LoginCheckingSession value)? checkingSession,
+    TResult Function(LoginLoading value)? loading,
+    TResult Function(LoginSuccess value)? success,
+    TResult Function(LoginError value)? error,
+    required TResult orElse(),
+  }) {
+    if (checkingSession != null) {
+      return checkingSession(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class LoginCheckingSession implements LoginState {
+  const factory LoginCheckingSession() = _$LoginCheckingSessionImpl;
 }
 
 /// @nodoc
@@ -248,6 +386,7 @@ class _$LoginLoadingImpl implements LoginLoading {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
+    required TResult Function() checkingSession,
     required TResult Function() loading,
     required TResult Function(UserEntity user) success,
     required TResult Function(String message) error,
@@ -259,6 +398,7 @@ class _$LoginLoadingImpl implements LoginLoading {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
+    TResult? Function()? checkingSession,
     TResult? Function()? loading,
     TResult? Function(UserEntity user)? success,
     TResult? Function(String message)? error,
@@ -270,6 +410,7 @@ class _$LoginLoadingImpl implements LoginLoading {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
+    TResult Function()? checkingSession,
     TResult Function()? loading,
     TResult Function(UserEntity user)? success,
     TResult Function(String message)? error,
@@ -285,6 +426,7 @@ class _$LoginLoadingImpl implements LoginLoading {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(LoginInitial value) initial,
+    required TResult Function(LoginCheckingSession value) checkingSession,
     required TResult Function(LoginLoading value) loading,
     required TResult Function(LoginSuccess value) success,
     required TResult Function(LoginError value) error,
@@ -296,6 +438,7 @@ class _$LoginLoadingImpl implements LoginLoading {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(LoginInitial value)? initial,
+    TResult? Function(LoginCheckingSession value)? checkingSession,
     TResult? Function(LoginLoading value)? loading,
     TResult? Function(LoginSuccess value)? success,
     TResult? Function(LoginError value)? error,
@@ -307,6 +450,7 @@ class _$LoginLoadingImpl implements LoginLoading {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(LoginInitial value)? initial,
+    TResult Function(LoginCheckingSession value)? checkingSession,
     TResult Function(LoginLoading value)? loading,
     TResult Function(LoginSuccess value)? success,
     TResult Function(LoginError value)? error,
@@ -394,6 +538,7 @@ class _$LoginSuccessImpl implements LoginSuccess {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
+    required TResult Function() checkingSession,
     required TResult Function() loading,
     required TResult Function(UserEntity user) success,
     required TResult Function(String message) error,
@@ -405,6 +550,7 @@ class _$LoginSuccessImpl implements LoginSuccess {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
+    TResult? Function()? checkingSession,
     TResult? Function()? loading,
     TResult? Function(UserEntity user)? success,
     TResult? Function(String message)? error,
@@ -416,6 +562,7 @@ class _$LoginSuccessImpl implements LoginSuccess {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
+    TResult Function()? checkingSession,
     TResult Function()? loading,
     TResult Function(UserEntity user)? success,
     TResult Function(String message)? error,
@@ -431,6 +578,7 @@ class _$LoginSuccessImpl implements LoginSuccess {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(LoginInitial value) initial,
+    required TResult Function(LoginCheckingSession value) checkingSession,
     required TResult Function(LoginLoading value) loading,
     required TResult Function(LoginSuccess value) success,
     required TResult Function(LoginError value) error,
@@ -442,6 +590,7 @@ class _$LoginSuccessImpl implements LoginSuccess {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(LoginInitial value)? initial,
+    TResult? Function(LoginCheckingSession value)? checkingSession,
     TResult? Function(LoginLoading value)? loading,
     TResult? Function(LoginSuccess value)? success,
     TResult? Function(LoginError value)? error,
@@ -453,6 +602,7 @@ class _$LoginSuccessImpl implements LoginSuccess {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(LoginInitial value)? initial,
+    TResult Function(LoginCheckingSession value)? checkingSession,
     TResult Function(LoginLoading value)? loading,
     TResult Function(LoginSuccess value)? success,
     TResult Function(LoginError value)? error,
@@ -548,6 +698,7 @@ class _$LoginErrorImpl implements LoginError {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
+    required TResult Function() checkingSession,
     required TResult Function() loading,
     required TResult Function(UserEntity user) success,
     required TResult Function(String message) error,
@@ -559,6 +710,7 @@ class _$LoginErrorImpl implements LoginError {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
+    TResult? Function()? checkingSession,
     TResult? Function()? loading,
     TResult? Function(UserEntity user)? success,
     TResult? Function(String message)? error,
@@ -570,6 +722,7 @@ class _$LoginErrorImpl implements LoginError {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
+    TResult Function()? checkingSession,
     TResult Function()? loading,
     TResult Function(UserEntity user)? success,
     TResult Function(String message)? error,
@@ -585,6 +738,7 @@ class _$LoginErrorImpl implements LoginError {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(LoginInitial value) initial,
+    required TResult Function(LoginCheckingSession value) checkingSession,
     required TResult Function(LoginLoading value) loading,
     required TResult Function(LoginSuccess value) success,
     required TResult Function(LoginError value) error,
@@ -596,6 +750,7 @@ class _$LoginErrorImpl implements LoginError {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(LoginInitial value)? initial,
+    TResult? Function(LoginCheckingSession value)? checkingSession,
     TResult? Function(LoginLoading value)? loading,
     TResult? Function(LoginSuccess value)? success,
     TResult? Function(LoginError value)? error,
@@ -607,6 +762,7 @@ class _$LoginErrorImpl implements LoginError {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(LoginInitial value)? initial,
+    TResult Function(LoginCheckingSession value)? checkingSession,
     TResult Function(LoginLoading value)? loading,
     TResult Function(LoginSuccess value)? success,
     TResult Function(LoginError value)? error,

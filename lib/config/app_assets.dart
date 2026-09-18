@@ -4,7 +4,8 @@
 abstract final class AppAssets {
   static const String _images = 'assets/images';
 
-  static const String logo = '$_images/logo.png';
+  static const String logo = '$_images/app_icon_aja.png';
+  static const String appIconAja = '$_images/app_icon_aja.png';
   static const String logoDark = '$_images/logo_dark.png';
   static const String placeholder = '$_images/placeholder.png';
 }

@@ -7,6 +7,7 @@ part 'login_state.freezed.dart';
 @freezed
 class LoginState with _$LoginState {
   const factory LoginState.initial() = LoginInitial;
+  const factory LoginState.checkingSession() = LoginCheckingSession;
   const factory LoginState.loading() = LoginLoading;
   const factory LoginState.success(UserEntity user) = LoginSuccess;
   const factory LoginState.error(String message) = LoginError;

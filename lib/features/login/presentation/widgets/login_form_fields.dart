@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../../config/app_colors.dart';
 import '../../../../config/app_size.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_text_field.dart';
 
 /// Email + password form fields for the login screen.
+///
+/// Wrapped in [RepaintBoundary] for smooth rendering with keyboard suggestions enabled.
 class LoginFormFields extends StatelessWidget {
   const LoginFormFields({
     super.key,
@@ -24,41 +25,57 @@ class LoginFormFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        AppTextField(
-          controller: emailController,
-          label: 'Email',
-          hint: 'you@example.com',
-          keyboardType: TextInputType.emailAddress,
-          textInputAction: TextInputAction.next,
-          autofillHints: const [AutofillHints.email],
-          enabled: enabled,
-          validator: Validators.email,
-          prefixIcon: const Icon(Icons.email_outlined),
-        ),
-        SizedBox(height: AppSize.md(context)),
-        AppTextField(
-          controller: passwordController,
-          label: 'Password',
-          hint: 'Enter your password',
-          obscureText: obscurePassword,
-          textInputAction: TextInputAction.done,
-          autofillHints: const [AutofillHints.password],
-          enabled: enabled,
-          validator: Validators.password,
-          prefixIcon: const Icon(Icons.lock_outline),
-          suffixIcon: IconButton(
-            onPressed: enabled ? onToggleObscure : null,
-            icon: Icon(
-              obscurePassword
-                  ? Icons.visibility_outlined
-                  : Icons.visibility_off_outlined,
-              color: AppColors.textSecondary,
+    return RepaintBoundary(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppTextField(
+            controller: emailController,
+            label: 'Email Address',
+            hint: 'Email Address',
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.email],
+            enableSuggestions: true,
+            enabled: enabled,
+            validator: Validators.email,
+            useUnderlineBorder: true,
+            prefixIcon: const Icon(
+              Icons.mail_outline,
+              color: Color(0xFF616161),
+              size: 22,
             ),
           ),
-        ),
-      ],
+          SizedBox(height: AppSize.lg(context)),
+          AppTextField(
+            controller: passwordController,
+            label: 'Password',
+            hint: 'Password',
+            obscureText: obscurePassword,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.password],
+            enabled: enabled,
+            validator: Validators.password,
+            useUnderlineBorder: true,
+            prefixIcon: const Icon(
+              Icons.lock_outline,
+              color: Color(0xFF616161),
+              size: 22,
+            ),
+            suffixIcon: GestureDetector(
+              onTap: enabled ? onToggleObscure : null,
+              behavior: HitTestBehavior.opaque,
+              child: Icon(
+                obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: const Color(0xFF616161),
+                size: 22,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
