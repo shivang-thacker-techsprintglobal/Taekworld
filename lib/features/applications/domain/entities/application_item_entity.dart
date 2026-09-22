@@ -32,8 +32,14 @@ class ApplicationItemEntity {
   final String? paymentStatus;
   final double? paymentAmount;
 
-  /// Check if the application is pending and not yet viewed
-  bool get isNew => !isViewed && status.toLowerCase() == 'pending';
+  /// Unviewed item in the pending list (UI-SPEC §4.4).
+  ///
+  /// Uses the API `isViewed` flag. Enrolled/history rows are never "new".
+  bool get isNew {
+    final normalized = status.toLowerCase().trim();
+    if (normalized == 'enrolled') return false;
+    return !isViewed;
+  }
 
   ApplicationItemEntity copyWith({
     bool? isViewed,

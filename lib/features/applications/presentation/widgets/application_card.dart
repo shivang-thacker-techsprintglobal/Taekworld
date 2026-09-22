@@ -132,15 +132,17 @@ class ApplicationCard extends StatelessWidget {
                                 const SizedBox(height: 3.0),
                                 Text(
                                   'Parent: ${item.parentName}',
-                                  style: AppTextStyle.b3(
+                                  style: AppTextStyle.b2(
                                     context,
                                     color: AppColors.textSecondary,
-                                  ),
+                                  ).copyWith(fontSize: 14),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 2.0),
-                                if (item.viewedDateFormatted.isNotEmpty)
+                                // Green check only for viewed items; unviewed show Applied date.
+                                if (item.isViewed &&
+                                    item.viewedDateFormatted.isNotEmpty)
                                   Row(
                                     children: [
                                       const Icon(
@@ -150,21 +152,25 @@ class ApplicationCard extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4.0),
                                       Text(
-                                        item.viewedDateFormatted,
-                                        style: AppTextStyle.b4(
+                                        item.viewedDateFormatted
+                                                .toLowerCase()
+                                                .startsWith('viewed')
+                                            ? item.viewedDateFormatted
+                                            : 'Viewed on ${item.viewedDateFormatted}',
+                                        style: AppTextStyle.b3(
                                           context,
                                           color: AppColors.textSecondary,
-                                        ).copyWith(fontSize: 11),
+                                        ).copyWith(fontSize: 12),
                                       ),
                                     ],
                                   )
                                 else if (item.applicationDate.isNotEmpty)
                                   Text(
                                     'Applied: ${item.applicationDate}',
-                                    style: AppTextStyle.b4(
+                                    style: AppTextStyle.b3(
                                       context,
                                       color: AppColors.textSecondary,
-                                    ).copyWith(fontSize: 11),
+                                    ).copyWith(fontSize: 12),
                                   ),
                               ],
                             ),

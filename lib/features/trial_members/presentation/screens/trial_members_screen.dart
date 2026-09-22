@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_colors.dart';
-import '../../../../config/app_scale.dart';
 import '../../../../config/app_text_style.dart';
 import '../../../../core/providers/current_user_provider.dart';
 import '../../../../core/widgets/app_error_view.dart';
@@ -23,11 +24,31 @@ class TrialMembersScreen extends ConsumerStatefulWidget {
 }
 
 class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
+  Timer? _autoRefreshTimer;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // UI-SPEC §4.6 — load 0.5s after mount.
+    Future<void>.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
       _loadData();
+      _startAutoRefresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    // UI-SPEC §4.6 — silent auto-refresh every 30s.
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      _loadData(isSilent: true);
     });
   }
 
@@ -87,12 +108,15 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 child: Text(
-                  '$newMembersCount NEW',
+                  '${newMembersCount > 99 ? '99+' : newMembersCount} NEW',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
+                    height: 1.1,
                   ),
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
             ],
@@ -106,7 +130,10 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             tooltip: 'Refresh',
-            onPressed: () => _loadData(),
+            // Non-blocking when list is already visible (UI-SPEC §4.6).
+            onPressed: () => _loadData(
+              isSilent: state is TrialMembersSuccess,
+            ),
           ),
         ],
       ),
@@ -127,10 +154,7 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
                         physics: const AlwaysScrollableScrollPhysics(
                           parent: BouncingScrollPhysics(),
                         ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppScale.pagePadding(context),
-                          vertical: 16.0,
-                        ),
+                        padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -156,7 +180,8 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: state.sevenDay.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10.0),
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 10.0),
                                 itemBuilder: (context, index) {
                                   final member = state.sevenDay[index];
                                   return TrialMemberCard(
@@ -186,7 +211,8 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: state.thirtyDay.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10.0),
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 10.0),
                                 itemBuilder: (context, index) {
                                   final member = state.thirtyDay[index];
                                   return TrialMemberCard(
@@ -225,11 +251,10 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
         children: [
           Text(
             'New Trial Members',
-            style: AppTextStyle.t1(
+            style: AppTextStyle.h4(
               context,
               color: AppColors.brandNavy,
             ).copyWith(
-              fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -283,18 +308,16 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
             context,
             color: color,
           ).copyWith(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
             height: 1.1,
           ),
         ),
         const SizedBox(height: 4.0),
         Text(
           label,
-          style: AppTextStyle.t3(
+          style: AppTextStyle.b2(
             context,
             color: AppColors.textSecondary,
-          ).copyWith(fontSize: 13),
+          ),
         ),
       ],
     );

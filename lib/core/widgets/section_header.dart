@@ -13,6 +13,7 @@ class SectionHeader extends StatelessWidget {
     this.underlineColor = AppColors.brandNavy,
     this.underlineThickness = 2.0,
     this.titleColor,
+    this.titleFontSize = 18,
     this.countText,
     this.isHighlighted = false,
     this.pillText,
@@ -22,6 +23,7 @@ class SectionHeader extends StatelessWidget {
   final Color underlineColor;
   final double underlineThickness;
   final Color? titleColor;
+  final double titleFontSize;
   final String? countText;
   final bool isHighlighted;
   final String? pillText;
@@ -41,7 +43,7 @@ class SectionHeader extends StatelessWidget {
                 color: titleColor ?? AppColors.brandNavy,
               ).copyWith(
                 fontWeight: FontWeight.w700,
-                fontSize: 18,
+                fontSize: titleFontSize,
               ),
             ),
             if (pillText != null) ...[

@@ -63,7 +63,6 @@ class TrialMemberDetailSheet extends StatelessWidget {
                       color: AppColors.brandNavy,
                     ).copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 22,
                     ),
                   ),
                 ),
@@ -74,7 +73,7 @@ class TrialMemberDetailSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   child: Text(
-                    '${member.trialType}-Day Trial',
+                    '${is7Day ? 7 : 30}-Day Trial',
                     style: TextStyle(
                       color: accentColor,
                       fontSize: 12,
@@ -92,7 +91,12 @@ class TrialMemberDetailSheet extends StatelessWidget {
           // Details List
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
+              padding: EdgeInsets.fromLTRB(
+                20.0,
+                20.0,
+                20.0,
+                20.0 + MediaQuery.paddingOf(context).bottom,
+              ),
               child: Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(

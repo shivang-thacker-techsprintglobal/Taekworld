@@ -12,16 +12,38 @@ class TrialMembersRemoteDataSource {
 
   final DioClient _client;
 
-  Future<List<TrialMemberModel>> getTrialStudents(String dojangId, String category) async {
+  Future<List<TrialMemberModel>> getSevenDayTrials(String dojangId) {
+    return _getByCategory(dojangId, Api.trialCategorySevenDay);
+  }
+
+  Future<List<TrialMemberModel>> getThirtyDayTrials(String dojangId) {
+    return _getByCategory(dojangId, Api.trialCategoryThirtyDay);
+  }
+
+  Future<List<TrialMemberModel>> _getByCategory(
+    String dojangId,
+    String category,
+  ) async {
     try {
-      final response = await _client.get<List<dynamic>>(
-        Api.trialStudents(dojangId),
+      final response = await _client.get<dynamic>(
+        Api.trialMembers(dojangId),
         queryParameters: {'category': category},
       );
 
-      final data = response.data ?? [];
+      final data = response.data;
+      if (data is! List) {
+        throw const UnknownNetworkException(
+          'Unexpected trial members response.',
+        );
+      }
+
       return data
-          .map((item) => TrialMemberModel.fromJson(item as Map<String, dynamic>))
+          .whereType<Map>()
+          .map(
+            (item) => TrialMemberModel.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
           .toList();
     } on DioException catch (error) {
       throw mapDioException(error);

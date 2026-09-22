@@ -39,7 +39,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
   Failure _mapNetworkException(NetworkException error) {
     return switch (error) {
-      UnauthorizedException() || ForbiddenException() =>
+      UnauthorizedException() || ForbiddenException() || RateLimitException() =>
         AuthFailure(error.message),
       NoInternetException() || TimeoutException() =>
         NetworkFailure(error.message),

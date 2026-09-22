@@ -6,9 +6,9 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (kDebugMode) {
-      debugPrint(
-        '→ ${options.method} ${options.baseUrl}${options.path}',
-      );
+        debugPrint(
+          '→ ${options.method} ${options.uri}',
+        );
     }
     handler.next(options);
   }

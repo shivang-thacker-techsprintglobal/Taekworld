@@ -297,9 +297,14 @@ class ApplicationDetailSheet extends ConsumerWidget {
             ),
           ),
 
-          // Pinned Bottom Button
+          // Pinned Bottom Button (+ system nav / home-indicator inset)
           Container(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.fromLTRB(
+              16.0,
+              16.0,
+              16.0,
+              16.0 + MediaQuery.paddingOf(context).bottom,
+            ),
             decoration: const BoxDecoration(
               color: AppColors.surface,
               border: Border(

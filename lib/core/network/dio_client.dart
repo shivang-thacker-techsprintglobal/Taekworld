@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/current_user_provider.dart';
+import '../storage/secure_session_storage.dart';
 import 'api.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
@@ -11,6 +13,8 @@ import 'interceptors/logging_interceptor.dart';
 /// never create ad-hoc Dio instances inside screens.
 class DioClient {
   DioClient({
+    required SecureSessionStorage sessionStorage,
+    void Function()? onSessionExpired,
     Dio? dio,
     List<Interceptor>? interceptors,
   }) : _dio = dio ??
@@ -27,7 +31,10 @@ class DioClient {
               ),
             ) {
     _dio.interceptors.addAll([
-      AuthInterceptor(),
+      AuthInterceptor(
+        sessionStorage: sessionStorage,
+        onSessionExpired: onSessionExpired,
+      ),
       ...?interceptors,
       LoggingInterceptor(),
     ]);
@@ -101,5 +108,11 @@ class DioClient {
 }
 
 final dioClientProvider = Provider<DioClient>((ref) {
-  return DioClient();
+  final storage = ref.watch(secureSessionStorageProvider);
+  return DioClient(
+    sessionStorage: storage,
+    onSessionExpired: () {
+      ref.read(currentUserProvider.notifier).state = null;
+    },
+  );
 });

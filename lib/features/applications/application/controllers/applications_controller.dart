@@ -7,7 +7,8 @@ import '../../domain/repositories/applications_repository.dart';
 import 'applications_state.dart';
 
 class ApplicationsController extends StateNotifier<ApplicationsState> {
-  ApplicationsController(this._repository, this._ref) : super(const ApplicationsInitial());
+  ApplicationsController(this._repository, this._ref)
+      : super(const ApplicationsInitial());
 
   final ApplicationsRepository _repository;
   final Ref _ref;
@@ -53,11 +54,17 @@ class ApplicationsController extends StateNotifier<ApplicationsState> {
   void markAsViewed(int id) {
     if (state is ApplicationsSuccess) {
       final current = state as ApplicationsSuccess;
+      final today = DateTime.now();
+      final stamp =
+          '${today.year.toString().padLeft(4, '0')}-'
+          '${today.month.toString().padLeft(2, '0')}-'
+          '${today.day.toString().padLeft(2, '0')}';
+
       final updatedPending = current.pending.map((item) {
         if (item.id == id) {
           return item.copyWith(
             isViewed: true,
-            viewedDateFormatted: 'Viewed on Today',
+            viewedDateFormatted: stamp,
           );
         }
         return item;

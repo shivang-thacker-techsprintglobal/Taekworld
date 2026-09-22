@@ -19,9 +19,12 @@ class TrialMemberCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final is7Day = member.isSevenDay;
     final accentColor = is7Day ? AppColors.accentOrange : AppColors.accentGreen;
-    final initial = member.displayName.trim().isNotEmpty
-        ? member.displayName.trim()[0].toUpperCase()
+    // UI-SPEC §4.6 — "?" when there is no name.
+    final trimmedName = member.name.trim();
+    final initial = trimmedName.isNotEmpty
+        ? trimmedName[0].toUpperCase()
         : '?';
+    final trialDaysLabel = '${is7Day ? 7 : 30} days';
 
     return Material(
       color: AppColors.surface,
@@ -108,7 +111,7 @@ class TrialMemberCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     child: Text(
-                      '${member.trialType} days',
+                      trialDaysLabel,
                       style: TextStyle(
                         color: accentColor,
                         fontSize: 11,

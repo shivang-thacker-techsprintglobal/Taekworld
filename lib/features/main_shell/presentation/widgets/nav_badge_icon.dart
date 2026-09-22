@@ -4,7 +4,8 @@ import '../../../../config/app_colors.dart';
 
 /// Navigation badge icon per UI-SPEC §3.2.
 ///
-/// Circle badge, min 18x18, white 10sp bold, `99+` cap, top-right offset.
+/// Pill badge (circle for 1 digit), min 18×18, white 10sp bold, `99+` cap,
+/// offset to the top-right of the icon.
 class NavBadgeIcon extends StatelessWidget {
   const NavBadgeIcon({
     super.key,
@@ -24,6 +25,7 @@ class NavBadgeIcon extends StatelessWidget {
     }
 
     final badgeText = badgeCount > 99 ? '99+' : '$badgeCount';
+    final isWide = badgeText.length > 1;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -31,28 +33,32 @@ class NavBadgeIcon extends StatelessWidget {
         icon,
         Positioned(
           top: -4,
-          right: -8,
+          right: isWide ? -12 : -8,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: isWide ? 5.0 : 4.0,
+              vertical: 2.0,
+            ),
             constraints: const BoxConstraints(
               minWidth: 18,
               minHeight: 18,
             ),
             decoration: BoxDecoration(
               color: badgeColor,
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(999),
             ),
-            child: Center(
-              child: Text(
-                badgeText,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  height: 1.0,
-                ),
-                textAlign: TextAlign.center,
+            alignment: Alignment.center,
+            child: Text(
+              badgeText,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                height: 1.0,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              softWrap: false,
             ),
           ),
         ),

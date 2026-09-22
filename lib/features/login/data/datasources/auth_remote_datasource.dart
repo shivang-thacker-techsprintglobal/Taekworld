@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/network/exceptions/network_exceptions.dart';
+import '../../../../core/network/interceptors/auth_interceptor.dart';
+import '../models/auth_response.dart';
 import '../models/login_request.dart';
-import '../models/login_response.dart';
+import '../models/refresh_token_request.dart';
 
 /// Remote data source for authentication APIs.
 class AuthRemoteDataSource {
@@ -13,27 +15,51 @@ class AuthRemoteDataSource {
 
   final DioClient _client;
 
-  Future<LoginResponse> login(LoginRequest request) async {
+  Future<AuthResponse> login(LoginRequest request) async {
     try {
       final response = await _client.post<Map<String, dynamic>>(
         Api.login,
         data: request.toJson(),
+        options: Options(extra: const {AuthInterceptorKeys.skipAuth: true}),
       );
-
-      final data = response.data;
-      if (data == null) {
-        throw const UnknownNetworkException('Empty login response.');
-      }
-
-      // Support both `{ ...user }` and `{ "data": { ...user } }` payloads.
-      final payload = data['data'] is Map<String, dynamic>
-          ? data['data'] as Map<String, dynamic>
-          : data;
-
-      return LoginResponse.fromJson(payload);
+      return _parseAuthResponse(response.data);
     } on DioException catch (error) {
       throw mapDioException(error);
     }
+  }
+
+  Future<AuthResponse> refreshToken(RefreshTokenRequest request) async {
+    try {
+      final response = await _client.post<Map<String, dynamic>>(
+        Api.refreshToken,
+        data: request.toJson(),
+        options: Options(extra: const {AuthInterceptorKeys.skipAuth: true}),
+      );
+      return _parseAuthResponse(response.data);
+    } on DioException catch (error) {
+      throw mapDioException(error);
+    }
+  }
+
+  Future<AuthResponse> getProfile() async {
+    try {
+      final response = await _client.get<Map<String, dynamic>>(Api.profile);
+      return _parseAuthResponse(response.data);
+    } on DioException catch (error) {
+      throw mapDioException(error);
+    }
+  }
+
+  AuthResponse _parseAuthResponse(Map<String, dynamic>? data) {
+    if (data == null) {
+      throw const UnknownNetworkException('Empty auth response.');
+    }
+
+    final payload = data['data'] is Map<String, dynamic>
+        ? data['data'] as Map<String, dynamic>
+        : data;
+
+    return AuthResponse.fromJson(payload);
   }
 }
 

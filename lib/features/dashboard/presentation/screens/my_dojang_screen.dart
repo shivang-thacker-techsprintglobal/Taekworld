@@ -9,7 +9,6 @@ import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loader.dart';
 import '../../../login/application/controllers/login_controller.dart';
 import '../../../login/domain/entities/user_entity.dart';
-import '../../../login/presentation/screens/login_screen.dart';
 import '../../application/controllers/dashboard_controller.dart';
 import '../widgets/dojang_info_card.dart';
 import '../widgets/member_statistics_grid.dart';
@@ -84,12 +83,8 @@ class _MyDojangScreenState extends ConsumerState<MyDojangScreen> {
     );
 
     if (confirmed == true && mounted) {
-      ref.read(currentUserProvider.notifier).state = null;
-      ref.read(loginControllerProvider.notifier).reset();
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+      await ref.read(loginControllerProvider.notifier).logout();
+      // AuthGate watches login state and returns to LoginScreen.
     }
   }
 

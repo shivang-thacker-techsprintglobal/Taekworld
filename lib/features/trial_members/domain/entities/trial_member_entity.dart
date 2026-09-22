@@ -1,4 +1,4 @@
-/// Domain entity representing a trial member item per UI-SPEC §4.6 & `02-API-INTEGRATION.md` §3.2.
+/// Domain entity representing a trial member item per UI-SPEC §4.6 & API §3.2.
 class TrialMemberEntity {
   const TrialMemberEntity({
     required this.id,
@@ -17,7 +17,8 @@ class TrialMemberEntity {
     this.isNewStudent = true,
   });
 
-  final int id;
+  /// Backend id (UUID string on UAT/production).
+  final String id;
   final String name;
   final String email;
   final String parentName;
@@ -35,5 +36,6 @@ class TrialMemberEntity {
   bool get isSevenDay => trialType.contains('7');
   bool get isThirtyDay => trialType.contains('30');
   bool get isExpired => daysRemaining <= 0;
-  String get displayName => name.isNotEmpty ? name : (parentName.isNotEmpty ? parentName : 'Student');
+  String get displayName =>
+      name.isNotEmpty ? name : (parentName.isNotEmpty ? parentName : 'Student');
 }

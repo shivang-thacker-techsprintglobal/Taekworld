@@ -5,17 +5,18 @@ import '../../../../config/app_colors.dart';
 import '../../../../config/app_scale.dart';
 import '../../../../config/app_size.dart';
 import '../../../../config/app_text_style.dart';
-import '../../../../core/providers/current_user_provider.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/inline_error_box.dart';
-import '../../../main_shell/presentation/screens/main_shell_screen.dart';
 import '../../application/controllers/login_controller.dart';
 import '../../application/controllers/login_state.dart';
 import '../widgets/login_footer.dart';
 import '../widgets/login_form_fields.dart';
 import '../widgets/login_header.dart';
 
-/// Pixel-accurate & fully responsive Login Screen per UI-SPEC §4.1.
+/// Login form screen per UI-SPEC §4.1.
+///
+/// Session bootstrap / routing is handled by [AuthGate] — this screen only
+/// renders the form (initial / loading / error).
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -25,8 +26,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'master@taekworld.com');
-  final _passwordController = TextEditingController(text: '123456');
+  final _emailController = TextEditingController(text: 'info@taekworld.com');
+  final _passwordController = TextEditingController(text: 'Password123');
   bool _obscurePassword = true;
 
   @override
@@ -37,7 +38,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _onSubmit() async {
-    // Trigger inline validation errors for empty or invalid fields
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     await ref.read(loginControllerProvider.notifier).login(
@@ -48,50 +48,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<LoginState>(loginControllerProvider, (previous, next) {
-      next.whenOrNull(
-        success: (user) {
-          ref.read(currentUserProvider.notifier).state = user;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(
-              builder: (_) => const MainShellScreen(),
-            ),
-          );
-        },
-      );
-    });
-
     final loginState = ref.watch(loginControllerProvider);
-
-    if (loginState is LoginCheckingSession) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandNavy),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Checking session...',
-                style: AppTextStyle.b1(
-                  context,
-                  color: AppColors.textSecondary,
-                ).copyWith(fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     final isLoading = loginState is LoginLoading;
     final errorMessage = loginState is LoginError ? loginState.message : null;
 
@@ -116,12 +73,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 16),
-                    // Header (Logo + Title + Subtitle)
                     const LoginHeader(),
-
                     const SizedBox(height: 28),
-
-                    // Card Container (Form Card)
                     Container(
                       padding: const EdgeInsets.all(24.0),
                       decoration: BoxDecoration(
@@ -150,23 +103,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               obscurePassword: _obscurePassword,
                               enabled: !isLoading,
                               onToggleObscure: () {
-                                setState(() => _obscurePassword = !_obscurePassword);
+                                setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                );
                               },
                             ),
-
                             if (errorMessage != null) ...[
                               const SizedBox(height: 16),
                               InlineErrorBox(message: errorMessage),
                             ],
-
                             const SizedBox(height: 28),
-
-                            // Red Login Button (Radius 8, 18sp bold white text)
                             AppButton(
                               label: 'Login',
                               isLoading: isLoading,
                               isEnabled: !isLoading,
-                              backgroundColor: AppColors.primary, // #B00000
+                              backgroundColor: AppColors.primary,
                               borderRadius: 8.0,
                               textStyle: AppTextStyle.b1(
                                 context,
@@ -181,10 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Footer Copyright Text
                     const LoginFooter(),
                     const SizedBox(height: 16),
                   ],

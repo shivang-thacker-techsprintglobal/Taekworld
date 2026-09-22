@@ -72,22 +72,40 @@ class ApplicationItemModel {
       name = '$firstName $lastName'.trim();
     }
 
+    final viewedFormatted =
+        (json['viewedDateFormatted'] as String?)?.trim() ?? '';
+
     return ApplicationItemModel(
       id: json['id'] as int? ?? 0,
       studentName: name.isNotEmpty ? name : 'Student',
-      parentName: json['parentName'] as String? ?? json['parentFullName'] as String? ?? 'N/A',
-      applicationDate: json['applicationDate'] as String? ?? json['applicationDateValue'] as String? ?? '',
-      status: json['status'] as String? ?? json['applicationStatus'] as String? ?? 'Pending',
+      parentName:
+          json['parentName'] as String? ?? json['parentFullName'] as String? ?? 'N/A',
+      applicationDate: json['applicationDate'] as String? ?? '',
+      status: json['status'] as String? ??
+          json['applicationStatus'] as String? ??
+          'Pending',
       studentFirstName: firstName,
       studentLastName: lastName,
       parentEmail: json['parentEmail'] as String? ?? '',
-      parentPhone: json['parentPhone'] as String? ?? json['parentPhoneNumber'] as String? ?? '',
-      isViewed: json['isViewed'] as bool? ?? false,
+      parentPhone: json['parentPhone'] as String? ??
+          json['parentPhoneNumber'] as String? ??
+          '',
+      isViewed: _readBool(json['isViewed']),
       viewedDate: json['viewedDate'] as String?,
-      viewedDateFormatted: json['viewedDateFormatted'] as String? ?? '',
+      viewedDateFormatted: viewedFormatted,
       paymentStatus: json['paymentStatus'] as String?,
       paymentAmount: (json['paymentAmount'] as num?)?.toDouble(),
     );
+  }
+
+  static bool _readBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.toLowerCase().trim();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
   }
 
   ApplicationItemEntity toEntity() => ApplicationItemEntity(

@@ -1,6 +1,6 @@
 import '../../domain/entities/trial_member_entity.dart';
 
-/// DTO for Trial Member item from `GET /api/TrialMember/students/{dojangId}?category={category}`.
+/// DTO for `GET /api/TrialMember/students/{dojangId}?category=…`.
 class TrialMemberModel {
   const TrialMemberModel({
     required this.id,
@@ -19,7 +19,7 @@ class TrialMemberModel {
     this.isNewStudent = true,
   });
 
-  final int id;
+  final String id;
   final String name;
   final String email;
   final String parentName;
@@ -35,35 +35,52 @@ class TrialMemberModel {
   final bool isNewStudent;
 
   factory TrialMemberModel.fromJson(Map<String, dynamic> json) {
-    final rawName = json['name'] as String? ?? json['fullName'] as String? ?? '';
+    final rawName =
+        json['name'] as String? ?? json['fullName'] as String? ?? '';
     final trialTypeStr = json['trialType']?.toString() ?? '7';
-    final isNew = (json['status'] == 'new') || (json['isNewStudent'] as bool? ?? true);
+    final status = json['status']?.toString() ?? 'new';
+    final isTrialUser = json['isTrialUser'] as bool? ?? true;
+    final isNewStudent = status.toLowerCase() == 'new' || isTrialUser;
 
-    int calculatedDays = json['daysRemaining'] as int? ?? 0;
-    if (calculatedDays == 0 && json['trialEndDate'] != null) {
+    var calculatedDays = (json['daysRemaining'] as num?)?.toInt() ?? 0;
+    if (json['trialEndDate'] != null) {
       final endDate = DateTime.tryParse(json['trialEndDate'].toString());
       if (endDate != null) {
-        calculatedDays = endDate.difference(DateTime.now()).inDays;
-        if (calculatedDays < 0) calculatedDays = 0;
+        final today = DateTime.now();
+        final endDay = DateTime(endDate.year, endDate.month, endDate.day);
+        final todayDay = DateTime(today.year, today.month, today.day);
+        calculatedDays = endDay.difference(todayDay).inDays;
       }
     }
 
     return TrialMemberModel(
-      id: json['id'] as int? ?? json['userId']?.hashCode ?? 0,
+      id: _readId(json),
       name: rawName,
       email: json['email'] as String? ?? '',
       parentName: json['parentName'] as String? ?? '',
-      parentPhone: json['parentPhone'] as String? ?? json['phoneNumber'] as String? ?? '',
-      joinDate: json['joinDate'] as String? ?? json['trialStartDate'] as String? ?? '',
-      status: json['status'] as String? ?? 'new',
+      parentPhone: json['parentPhone'] as String? ??
+          json['phoneNumber'] as String? ??
+          '',
+      joinDate: json['joinDate'] as String? ??
+          json['trialStartDate'] as String? ??
+          '',
+      status: status,
       trialEndDate: json['trialEndDate'] as String? ?? '',
-      isTrialUser: json['isTrialUser'] as bool? ?? true,
+      isTrialUser: isTrialUser,
       trialType: trialTypeStr,
       userCode: json['userCode'] as String? ?? '',
-      registrationDate: json['registrationDate'] as String? ?? json['joinDate'] as String? ?? '',
+      registrationDate: json['registrationDate'] as String? ??
+          json['joinDate'] as String? ??
+          '',
       daysRemaining: calculatedDays,
-      isNewStudent: isNew,
+      isNewStudent: isNewStudent,
     );
+  }
+
+  static String _readId(Map<String, dynamic> json) {
+    final raw = json['id'] ?? json['userId'];
+    if (raw == null) return '';
+    return raw.toString();
   }
 
   TrialMemberEntity toEntity() => TrialMemberEntity(

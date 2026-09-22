@@ -26,7 +26,9 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // UI-SPEC §4.4 — load 0.5s after mount.
+    Future<void>.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
       _loadData();
     });
   }
@@ -145,6 +147,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                               underlineColor: AppColors.brandNavy,
                               underlineThickness: 2.0,
                               titleColor: AppColors.brandNavy,
+                              titleFontSize: 20,
                               pillText: state.unviewedCount > 0
                                   ? '${state.unviewedCount} new'
                                   : null,
@@ -179,6 +182,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                               underlineColor: Colors.grey.shade300,
                               underlineThickness: 1.0,
                               titleColor: AppColors.textSecondary,
+                              titleFontSize: 18,
                               countText: '${state.totalHistory}',
                               isHighlighted: false,
                             ),

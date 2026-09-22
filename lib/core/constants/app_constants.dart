@@ -2,8 +2,11 @@
 abstract final class AppConstants {
   static const String appName = 'Taekworld';
   static const Duration defaultAnimationDuration = Duration(milliseconds: 250);
+  static const Duration splashMinDuration = Duration(seconds: 2);
+  static const Duration splashFadeInDuration = Duration(milliseconds: 800);
   static const int minPasswordLength = 6;
 
-  /// Set to true to bypass backend APIs and use realistic UI test data
-  static const bool useMockData = true;
+  /// Set to true to bypass backend APIs and use realistic UI test data.
+  /// Keep false when integrating against UAT/production.
+  static const bool useMockData = false;
 }

@@ -13,14 +13,22 @@ class TrialMembersController extends StateNotifier<TrialMembersState> {
   final TrialMembersRepository _repository;
   final Ref _ref;
 
+  /// Loads trial members.
+  ///
+  /// When data is already on screen, never swaps to a full-screen loader —
+  /// refreshes stay non-blocking (UI-SPEC §4.6), same pattern as Applications.
   Future<void> loadTrialMembers(String dojangId, {bool isSilent = false}) async {
-    if (!isSilent) {
-      if (state is! TrialMembersSuccess) {
+    final hasData = state is TrialMembersSuccess;
+
+    if (!hasData) {
+      if (!isSilent) {
         state = const TrialMembersLoading();
       }
-    } else if (state is TrialMembersSuccess) {
+    } else {
       final current = state as TrialMembersSuccess;
-      state = current.copyWith(isRefreshing: true);
+      if (!current.isRefreshing) {
+        state = current.copyWith(isRefreshing: true);
+      }
     }
 
     try {

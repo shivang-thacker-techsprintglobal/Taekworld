@@ -54,6 +54,12 @@ class BadRequestException extends NetworkException {
   ]) : super(statusCode: 400);
 }
 
+class RateLimitException extends NetworkException {
+  const RateLimitException([
+    super.message = 'Too many attempts. Please try again later.',
+  ]) : super(statusCode: 429);
+}
+
 class UnknownNetworkException extends NetworkException {
   const UnknownNetworkException([
     super.message = 'An unexpected error occurred.',
@@ -99,6 +105,10 @@ NetworkException _fromStatusCode(int? statusCode, String? message) {
     case 404:
       return NotFoundException(
         message ?? 'The requested resource was not found.',
+      );
+    case 429:
+      return RateLimitException(
+        message ?? 'Too many attempts. Please try again later.',
       );
     case 500:
     case 502:

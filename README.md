@@ -85,11 +85,27 @@ fvm flutter pub run build_runner build --delete-conflicting-outputs
 fvm flutter run
 ```
 
-Override API base URL:
+### API environment (UAT / production)
+
+Hosts live in `lib/core/network/api_env.dart`. Default is **UAT**.
 
 ```bash
-fvm flutter run --dart-define=API_BASE_URL=https://your-api.example.com
+# UAT (default)
+fvm flutter run --dart-define=API_ENV=uat
+
+# Production
+fvm flutter run --dart-define=API_ENV=production
+
+# Optional full URL override (wins over API_ENV)
+fvm flutter run --dart-define=API_BASE_URL=https://api.taekworld.com
 ```
+
+| Flavour | Base URL |
+| --- | --- |
+| `uat` (default) | `https://api-uat-433251623503.us-east4.run.app` |
+| `production` | `https://api.taekworld.com` |
+
+Auth tokens are stored in the platform secure store (`flutter_secure_storage`), not SharedPreferences.
 
 ---
 

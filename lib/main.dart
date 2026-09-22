@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/app_theme.dart';
 import 'core/constants/app_constants.dart';
-import 'features/login/presentation/screens/login_screen.dart';
+import 'features/login/presentation/screens/auth_gate.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +21,7 @@ class TaekworldApp extends StatelessWidget {
       theme: AppTheme.light(context),
       darkTheme: AppTheme.dark(context),
       themeMode: ThemeMode.system,
-      home: const LoginScreen(),
+      home: const AuthGate(),
     );
   }
 }
