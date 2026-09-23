@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../config/app_assets.dart';
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_text_style.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../main_shell/presentation/screens/main_shell_screen.dart';
 import '../../application/controllers/login_controller.dart';
 import '../../application/controllers/login_state.dart';
@@ -12,55 +10,14 @@ import 'login_screen.dart';
 
 /// Root auth router.
 ///
-/// 1. Branded splash (fade-in, min [AppConstants.splashMinDuration])
-/// 2. "Checking session..." while restore is still running
-/// 3. [MainShellScreen] or [LoginScreen]
-class AuthGate extends ConsumerStatefulWidget {
+/// Cold start shows UI-SPEC §4.1 "Checking session..." while restore runs,
+/// then [MainShellScreen] or [LoginScreen].
+class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
   @override
-  ConsumerState<AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends ConsumerState<AuthGate>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _fadeController;
-  late final Animation<double> _fadeAnimation;
-  bool _minDurationElapsed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: AppConstants.splashFadeInDuration,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeIn,
-    );
-    _fadeController.forward();
-
-    Future<void>.delayed(AppConstants.splashMinDuration, () {
-      if (mounted) {
-        setState(() => _minDurationElapsed = true);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final loginState = ref.watch(loginControllerProvider);
-
-    if (!_minDurationElapsed) {
-      return _SplashScreen(fadeAnimation: _fadeAnimation);
-    }
 
     return switch (loginState) {
       LoginCheckingSession() => const _SessionCheckingScreen(),
@@ -70,38 +27,8 @@ class _AuthGateState extends ConsumerState<AuthGate>
   }
 }
 
-class _SplashScreen extends StatelessWidget {
-  const _SplashScreen({required this.fadeAnimation});
-
-  final Animation<double> fadeAnimation;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: FadeTransition(
-          opacity: fadeAnimation,
-          child: Image.asset(
-            AppAssets.splashAjaLogo,
-            width: 180,
-            height: 180,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Image.asset(
-                AppAssets.appIconAja,
-                width: 180,
-                height: 180,
-                fit: BoxFit.contain,
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
+/// UI-SPEC §4.1 A — background #FAFAFA, centred navy 24px spinner,
+/// "Checking session..." 16sp grey.
 class _SessionCheckingScreen extends StatelessWidget {
   const _SessionCheckingScreen();
 
@@ -113,21 +40,6 @@ class _SessionCheckingScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              AppAssets.splashAjaLogo,
-              width: 96,
-              height: 96,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Image.asset(
-                  AppAssets.appIconAja,
-                  width: 96,
-                  height: 96,
-                  fit: BoxFit.contain,
-                );
-              },
-            ),
-            const SizedBox(height: 24),
             const SizedBox(
               width: 24,
               height: 24,
@@ -138,7 +50,7 @@ class _SessionCheckingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Loading...',
+              'Checking session...',
               style: AppTextStyle.b1(
                 context,
                 color: AppColors.textSecondary,
