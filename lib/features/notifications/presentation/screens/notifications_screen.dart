@@ -141,7 +141,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           vertical: 16.0,
                         ),
                         itemCount: state.notifications.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10.0),
+                        separatorBuilder: (context, index) => const SizedBox(height: 10.0),
                         itemBuilder: (context, index) {
                           final item = state.notifications[index];
                           return NotificationCard(

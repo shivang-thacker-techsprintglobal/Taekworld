@@ -1,7 +1,9 @@
+import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../main_shell/presentation/screens/main_shell_screen.dart';
+import '../../../main_shell/application/shell_providers.dart';
 import '../../data/repositories/notifications_repository_impl.dart';
+import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/repositories/notifications_repository.dart';
 import 'notifications_state.dart';
 
@@ -26,7 +28,7 @@ class NotificationsController extends StateNotifier<NotificationsState> {
         isRefreshing: false,
       );
       state = newState;
-      _ref.read(notificationsBadgeProvider.notifier).state = newState.unreadCount;
+      await _publishUnread(newState.unreadCount);
     } catch (_) {
       if (state is! NotificationsSuccess) {
         state = const NotificationsError('Failed to load notifications.');
@@ -34,13 +36,19 @@ class NotificationsController extends StateNotifier<NotificationsState> {
     }
   }
 
+  Future<void> addIncoming(AppNotificationEntity item) async {
+    await _repository.addNotification(item);
+    await loadNotifications(isSilent: true);
+  }
+
   Future<void> markAllAsRead() async {
     await _repository.markAllAsRead();
     if (state is NotificationsSuccess) {
       final current = state as NotificationsSuccess;
-      final updated = current.notifications.map((n) => n.copyWith(isRead: true)).toList();
+      final updated =
+          current.notifications.map((n) => n.copyWith(isRead: true)).toList();
       state = current.copyWith(notifications: updated);
-      _ref.read(notificationsBadgeProvider.notifier).state = 0;
+      await _publishUnread(0);
     }
   }
 
@@ -54,7 +62,7 @@ class NotificationsController extends StateNotifier<NotificationsState> {
       }).toList();
       final newState = current.copyWith(notifications: updated);
       state = newState;
-      _ref.read(notificationsBadgeProvider.notifier).state = newState.unreadCount;
+      await _publishUnread(newState.unreadCount);
     }
   }
 
@@ -65,14 +73,21 @@ class NotificationsController extends StateNotifier<NotificationsState> {
       final updated = current.notifications.where((n) => n.id != id).toList();
       final newState = current.copyWith(notifications: updated);
       state = newState;
-      _ref.read(notificationsBadgeProvider.notifier).state = newState.unreadCount;
+      await _publishUnread(newState.unreadCount);
     }
   }
 
   Future<void> clearAll() async {
     await _repository.clearAll();
     state = const NotificationsSuccess(notifications: []);
-    _ref.read(notificationsBadgeProvider.notifier).state = 0;
+    await _publishUnread(0);
+  }
+
+  Future<void> _publishUnread(int count) async {
+    _ref.read(notificationsBadgeProvider.notifier).state = count;
+    try {
+      await AppBadgePlus.updateBadge(count);
+    } catch (_) {}
   }
 }
 

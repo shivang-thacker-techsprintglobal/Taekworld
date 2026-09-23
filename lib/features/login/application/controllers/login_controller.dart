@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../../../core/providers/current_user_provider.dart';
+import '../../../notifications/application/push_notification_service.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'login_state.dart';
@@ -59,6 +60,9 @@ class LoginController extends StateNotifier<LoginState> {
   }
 
   Future<void> logout() async {
+    try {
+      await _ref.read(pushNotificationServiceProvider).unregisterDevice();
+    } catch (_) {}
     await _repository.clearSession();
     _ref.read(currentUserProvider.notifier).state = null;
     state = const LoginState.initial();

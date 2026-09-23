@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/app_colors.dart';
@@ -23,18 +24,38 @@ class NotificationCard extends StatelessWidget {
     final targetUrl = notification.url ?? 'https://www.blackbelthw.com/master';
     final uri = Uri.parse(targetUrl);
     try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
+        _showCouldNotOpen(context, targetUrl);
+      }
     } catch (_) {
-      // Ignore if cannot launch
+      if (context.mounted) {
+        _showCouldNotOpen(context, targetUrl);
+      }
     }
+  }
+
+  void _showCouldNotOpen(BuildContext context, String url) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Could not open browser'),
+        action: SnackBarAction(
+          label: 'Copy Link',
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: url));
+          },
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isUnread = !notification.isRead;
 
-    // Type icon & color mapping
-    final (IconData iconData, Color iconColor) = switch (notification.type.toLowerCase()) {
+    final (IconData iconData, Color iconColor) =
+        switch (notification.type.toLowerCase()) {
       'application' => (Icons.person_add, AppColors.primary),
       'trial' => (Icons.people, AppColors.accentOrange),
       'registration' => (Icons.how_to_reg, AppColors.accentGreen),
@@ -78,7 +99,8 @@ class NotificationCard extends StatelessWidget {
           onTap: () => _handleTap(context),
           borderRadius: BorderRadius.circular(10.0),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10.0),
               border: Border.all(
@@ -89,15 +111,12 @@ class NotificationCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Leading Type Icon
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: iconColor.withValues(alpha: 0.14),
                   child: Icon(iconData, color: iconColor, size: 20),
                 ),
                 const SizedBox(width: 12.0),
-
-                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +130,8 @@ class NotificationCard extends StatelessWidget {
                                 context,
                                 color: AppColors.textPrimary,
                               ).copyWith(
-                                fontWeight: isUnread ? FontWeight.w700 : FontWeight.w600,
+                                fontWeight:
+                                    isUnread ? FontWeight.w700 : FontWeight.w600,
                                 fontSize: 15,
                               ),
                             ),

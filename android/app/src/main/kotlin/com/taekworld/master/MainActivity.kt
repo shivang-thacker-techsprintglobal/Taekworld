@@ -1,4 +1,4 @@
-package com.taekworld.taekworld
+package com.taekworld.master
 
 import io.flutter.embedding.android.FlutterActivity
 

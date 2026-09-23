@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/failures.dart';
-import '../../../main_shell/presentation/screens/main_shell_screen.dart';
+import '../../../main_shell/application/shell_providers.dart';
 import '../../data/repositories/trial_members_repository_impl.dart';
 import '../../domain/repositories/trial_members_repository.dart';
 import 'trial_members_state.dart';

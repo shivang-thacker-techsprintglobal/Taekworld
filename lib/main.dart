@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,11 +10,12 @@ import 'config/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/widgets/app_crash_screen.dart';
 import 'features/login/presentation/screens/auth_gate.dart';
+import 'features/notifications/application/push_notification_service.dart';
 
 /// Holds a restart callback so [ErrorWidget.builder] can remount the app tree.
 VoidCallback? _appRestart;
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Build-time widget failures → §4.8 crash UI instead of the red/yellow box.
@@ -26,12 +29,14 @@ void main() {
     FlutterError.presentError(details);
   };
 
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   runZonedGuarded(
     () {
       runApp(const ProviderScope(child: AppBootstrap()));
     },
     (error, stack) {
-      // Uncaught async errors are reported; UI recovery is via AppBootstrap.
       if (kDebugMode) {
         debugPrint('Uncaught zone error: $error\n$stack');
       }
@@ -116,8 +121,27 @@ class _AppBootstrapState extends State<AppBootstrap> {
   }
 }
 
-class TaekworldApp extends StatelessWidget {
+class TaekworldApp extends ConsumerStatefulWidget {
   const TaekworldApp({super.key});
+
+  @override
+  ConsumerState<TaekworldApp> createState() => _TaekworldAppState();
+}
+
+class _TaekworldAppState extends ConsumerState<TaekworldApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await ref.read(pushNotificationServiceProvider).initialize();
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Push notification init skipped: $e');
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

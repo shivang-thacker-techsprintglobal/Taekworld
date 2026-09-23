@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "433251623503",
+    "project_id": "taekworld",
+    "storage_bucket": "taekworld.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:433251623503:android:9b10a0571a335103c1803a",
+        "android_client_info": {
+          "package_name": "com.taekworld.master"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAtbnD8W63SIEwukk-9K4WD3c2mbZCyyo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

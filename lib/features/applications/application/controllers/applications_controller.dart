@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/failures.dart';
-import '../../../main_shell/presentation/screens/main_shell_screen.dart';
+import '../../../main_shell/application/shell_providers.dart';
 import '../../data/repositories/applications_repository_impl.dart';
 import '../../domain/repositories/applications_repository.dart';
 import 'applications_state.dart';

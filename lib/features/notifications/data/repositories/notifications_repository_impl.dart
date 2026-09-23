@@ -2,77 +2,122 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/repositories/notifications_repository.dart';
+import '../datasources/notifications_local_datasource.dart';
+import '../datasources/notifications_remote_datasource.dart';
+import '../models/pending_notifications_response.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
-  static List<AppNotificationEntity> _notifications = [
-    AppNotificationEntity(
-      id: 'notif_1',
-      title: 'New Student Application',
-      message: 'Olivia Davis submitted a new student application for Taekworld Academy.',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-      type: 'application',
-      isRead: false,
-      url: 'https://www.blackbelthw.com/7037601000',
-    ),
-    AppNotificationEntity(
-      id: 'notif_2',
-      title: 'New 7-Day Trial Member',
-      message: 'Jay Smith registered for a 7-day free trial.',
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      type: 'trial',
-      isRead: false,
-      url: 'https://www.blackbelthw.com/7037601000',
-    ),
-    AppNotificationEntity(
-      id: 'notif_3',
-      title: 'Parent Recommendation Invitation',
-      message: 'Elena Martinez invited a friend to join the academy.',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      type: 'invitation',
-      isRead: true,
-      url: 'https://www.blackbelthw.com/7037601000',
-    ),
-    AppNotificationEntity(
-      id: 'notif_4',
-      title: 'Student Registration Confirmed',
-      message: 'Lucas Brown completed registration and payment.',
-      timestamp: DateTime.now().subtract(const Duration(days: 3)),
-      type: 'registration',
-      isRead: true,
-      url: 'https://www.blackbelthw.com/7037601000',
-    ),
-  ];
+  NotificationsRepositoryImpl({
+    required NotificationsLocalDatasource local,
+    required NotificationsRemoteDatasource remote,
+  })  : _local = local,
+        _remote = remote;
+
+  final NotificationsLocalDatasource _local;
+  final NotificationsRemoteDatasource _remote;
 
   @override
-  Future<List<AppNotificationEntity>> getNotifications() async {
-    await Future<void>.delayed(const Duration(milliseconds: 200));
-    return List.of(_notifications);
+  Future<List<AppNotificationEntity>> getNotifications() =>
+      _local.getNotifications();
+
+  @override
+  Future<void> markAllAsRead() => _local.markAllAsRead();
+
+  @override
+  Future<void> markAsRead(String id) => _local.markAsRead(id);
+
+  @override
+  Future<void> deleteNotification(String id) => _local.deleteNotification(id);
+
+  @override
+  Future<void> clearAll() => _local.clearAll();
+
+  @override
+  Future<AppNotificationEntity> addNotification(AppNotificationEntity item) =>
+      _local.upsert(item);
+
+  @override
+  Future<int> unreadCount() => _local.unreadCount();
+
+  @override
+  Future<void> registerDevice({
+    required String fcmToken,
+    required String platform,
+    required int dojangId,
+    required String deviceInfo,
+  }) {
+    return _remote.registerDevice(
+      fcmToken: fcmToken,
+      platform: platform,
+      dojangId: dojangId,
+      deviceInfo: deviceInfo,
+    );
   }
 
   @override
-  Future<void> markAllAsRead() async {
-    _notifications = _notifications.map((n) => n.copyWith(isRead: true)).toList();
+  Future<void> deleteDevice({required String fcmToken}) {
+    return _remote.deleteDevice(fcmToken: fcmToken);
   }
 
   @override
-  Future<void> markAsRead(String id) async {
-    _notifications = _notifications.map((n) {
-      if (n.id == id) return n.copyWith(isRead: true);
-      return n;
-    }).toList();
-  }
+  Future<int> syncPendingNotifications({
+    required String dojangId,
+    required String masterPhone,
+  }) async {
+    final deviceId = await _local.getOrCreateDeviceId();
+    late final PendingNotificationsResponse pending;
+    try {
+      pending = await _remote.getPending(
+        dojangId: dojangId,
+        deviceId: deviceId,
+      );
+    } catch (_) {
+      return 0;
+    }
 
-  @override
-  Future<void> deleteNotification(String id) async {
-    _notifications.removeWhere((n) => n.id == id);
-  }
+    if (pending.notifications.isEmpty) return 0;
 
-  @override
-  Future<void> clearAll() async {
-    _notifications.clear();
+    final webUrl = masterPhone.trim().isNotEmpty
+        ? 'https://www.blackbelthw.com/${masterPhone.trim()}'
+        : 'https://www.blackbelthw.com/master';
+
+    for (final item in pending.notifications) {
+      await _local.upsert(
+        AppNotificationEntity(
+          id: 'pending_${item.id}',
+          title: item.title,
+          message: item.message,
+          timestamp: item.createdAt ?? DateTime.now(),
+          type: AppNotificationEntity.normalizeType(item.type),
+          isRead: false,
+          url: webUrl,
+          entityId: item.entityId.isNotEmpty ? item.entityId : null,
+        ),
+      );
+    }
+
+    try {
+      await _remote.markDelivered(
+        notificationIds: pending.notifications.map((e) => e.id).toList(),
+        deviceId: deviceId,
+      );
+    } catch (_) {
+      // History is already mirrored locally; delivery ack can retry later.
+    }
+
+    return pending.notifications.length;
   }
 }
 
-final notificationsRepositoryProvider = Provider<NotificationsRepository>((ref) {
-  return NotificationsRepositoryImpl();
+final notificationsLocalDatasourceProvider =
+    Provider<NotificationsLocalDatasource>((ref) {
+  return NotificationsLocalDatasource();
+});
+
+final notificationsRepositoryProvider =
+    Provider<NotificationsRepository>((ref) {
+  return NotificationsRepositoryImpl(
+    local: ref.watch(notificationsLocalDatasourceProvider),
+    remote: ref.watch(notificationsRemoteDatasourceProvider),
+  );
 });

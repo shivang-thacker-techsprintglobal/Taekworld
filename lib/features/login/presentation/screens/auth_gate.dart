@@ -113,6 +113,21 @@ class _SessionCheckingScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Image.asset(
+              AppAssets.splashAjaLogo,
+              width: 96,
+              height: 96,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Image.asset(
+                  AppAssets.appIconAja,
+                  width: 96,
+                  height: 96,
+                  fit: BoxFit.contain,
+                );
+              },
+            ),
+            const SizedBox(height: 24),
             const SizedBox(
               width: 24,
               height: 24,
@@ -123,7 +138,7 @@ class _SessionCheckingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Checking session...',
+              'Loading...',
               style: AppTextStyle.b1(
                 context,
                 color: AppColors.textSecondary,

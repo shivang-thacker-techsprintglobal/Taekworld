@@ -41,6 +41,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Signing / secrets (do not commit)
+/android/key.properties
+/android/app/*.jks
+/android/app/*.keystore
+
 # FVM
 .fvm/flutter_sdk
 .fvm/versions

@@ -34,4 +34,9 @@ abstract final class Api {
   // Notifications
   static const String registerDevice = '/api/Notification/register-device';
   static const String deleteDevice = '/api/Notification/delete-device';
+  static String pendingNotifications(String dojangId) =>
+      '/api/Notification/pending/$dojangId';
+  static const String markDelivered = '/api/Notification/mark-delivered';
+  static String acknowledgeNotification(String notificationId) =>
+      '/api/Notification/acknowledge/$notificationId';
 }
