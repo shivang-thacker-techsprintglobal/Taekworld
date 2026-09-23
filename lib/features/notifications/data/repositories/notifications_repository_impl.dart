@@ -24,7 +24,10 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   Future<void> markAllAsRead() => _local.markAllAsRead();
 
   @override
-  Future<void> markAsRead(String id) => _local.markAsRead(id);
+  Future<void> markAsRead(String id) async {
+    await _local.markAsRead(id);
+    await _acknowledgeIfPossible(id);
+  }
 
   @override
   Future<void> deleteNotification(String id) => _local.deleteNotification(id);
@@ -82,9 +85,10 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         : 'https://www.blackbelthw.com/master';
 
     for (final item in pending.notifications) {
+      // Use server notification id so acknowledge/{id} works on open.
       await _local.upsert(
         AppNotificationEntity(
-          id: 'pending_${item.id}',
+          id: '${item.id}',
           title: item.title,
           message: item.message,
           timestamp: item.createdAt ?? DateTime.now(),
@@ -106,6 +110,29 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
     }
 
     return pending.notifications.length;
+  }
+
+  /// Resolves a local inbox id to the server notification id, if any.
+  static String? serverNotificationId(String localId) {
+    final raw = localId.trim();
+    if (raw.isEmpty) return null;
+    if (raw.startsWith('pending_')) {
+      final stripped = raw.substring('pending_'.length);
+      return RegExp(r'^\d+$').hasMatch(stripped) ? stripped : null;
+    }
+    // FCM / pending rows use numeric notificationId; skip synthetic fcm_* keys.
+    if (RegExp(r'^\d+$').hasMatch(raw)) return raw;
+    return null;
+  }
+
+  Future<void> _acknowledgeIfPossible(String localId) async {
+    final serverId = serverNotificationId(localId);
+    if (serverId == null) return;
+    try {
+      await _remote.acknowledge(serverId);
+    } catch (_) {
+      // Local read already applied; server ack can fail offline.
+    }
   }
 }
 

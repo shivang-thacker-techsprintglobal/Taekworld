@@ -19,6 +19,7 @@ class NotificationsLocalDatasource {
   static const _permissionAskedKey = 'notifications.permission_asked';
   static const _pendingOpenUrlKey = 'notifications.pending_open_url';
   static const _pendingOpenTypeKey = 'notifications.pending_open_type';
+  static const _pendingOpenIdKey = 'notifications.pending_open_id';
 
   SharedPreferences? _prefs;
 
@@ -72,7 +73,11 @@ class NotificationsLocalDatasource {
     await prefs.setBool(_permissionAskedKey, true);
   }
 
-  Future<void> savePendingOpen({String? url, String? type}) async {
+  Future<void> savePendingOpen({
+    String? url,
+    String? type,
+    String? notificationId,
+  }) async {
     final prefs = await _ensurePrefs();
     if (url == null || url.isEmpty) {
       await prefs.remove(_pendingOpenUrlKey);
@@ -84,15 +89,23 @@ class NotificationsLocalDatasource {
     } else {
       await prefs.setString(_pendingOpenTypeKey, type);
     }
+    if (notificationId == null || notificationId.isEmpty) {
+      await prefs.remove(_pendingOpenIdKey);
+    } else {
+      await prefs.setString(_pendingOpenIdKey, notificationId);
+    }
   }
 
-  Future<({String? url, String? type})> consumePendingOpen() async {
+  Future<({String? url, String? type, String? notificationId})>
+      consumePendingOpen() async {
     final prefs = await _ensurePrefs();
     final url = prefs.getString(_pendingOpenUrlKey);
     final type = prefs.getString(_pendingOpenTypeKey);
+    final notificationId = prefs.getString(_pendingOpenIdKey);
     await prefs.remove(_pendingOpenUrlKey);
     await prefs.remove(_pendingOpenTypeKey);
-    return (url: url, type: type);
+    await prefs.remove(_pendingOpenIdKey);
+    return (url: url, type: type, notificationId: notificationId);
   }
 
   Future<List<AppNotificationEntity>> getNotifications() async {

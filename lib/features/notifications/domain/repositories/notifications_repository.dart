@@ -3,7 +3,11 @@ import '../entities/app_notification_entity.dart';
 abstract class NotificationsRepository {
   Future<List<AppNotificationEntity>> getNotifications();
   Future<void> markAllAsRead();
+
+  /// Marks read locally and acknowledges on the server when [id] is a
+  /// server `notificationId`.
   Future<void> markAsRead(String id);
+
   Future<void> deleteNotification(String id);
   Future<void> clearAll();
   Future<AppNotificationEntity> addNotification(AppNotificationEntity item);

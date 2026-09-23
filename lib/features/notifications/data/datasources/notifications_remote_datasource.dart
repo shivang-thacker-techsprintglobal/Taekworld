@@ -76,6 +76,19 @@ class NotificationsRemoteDatasource {
       throw mapDioException(error);
     }
   }
+
+  /// Marks a notification as read on the server when the user opens it.
+  Future<void> acknowledge(String notificationId) async {
+    final id = notificationId.trim();
+    if (id.isEmpty) return;
+    try {
+      await _client.post<Map<String, dynamic>>(
+        Api.acknowledgeNotification(id),
+      );
+    } on DioException catch (error) {
+      throw mapDioException(error);
+    }
+  }
 }
 
 final notificationsRemoteDatasourceProvider =

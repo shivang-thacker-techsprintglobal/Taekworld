@@ -62,10 +62,11 @@ class PushNotificationService {
     await _setupLocalNotifications();
 
     final messaging = FirebaseMessaging.instance;
+    // Foreground: do not use the OS banner — we show flutter_local_notifications.
     await messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
+      alert: false,
       badge: true,
-      sound: true,
+      sound: false,
     );
 
     _onMessageSub = FirebaseMessaging.onMessage.listen(_onForegroundMessage);
@@ -94,11 +95,18 @@ class PushNotificationService {
       onDidReceiveNotificationResponse: (response) {
         final payload = response.payload;
         if (payload == null || payload.isEmpty) return;
-        // payload format: type|url
+        // payload format: type|url|notificationId
         final parts = payload.split('|');
         final type = parts.isNotEmpty ? parts[0] : 'other';
-        final url = parts.length > 1 ? parts.sublist(1).join('|') : null;
-        unawaited(_routeNotificationTap(type: type, url: url));
+        final url = parts.length > 1 ? parts[1] : null;
+        final notificationId = parts.length > 2 ? parts[2] : null;
+        unawaited(
+          _routeNotificationTap(
+            type: type,
+            url: url?.isEmpty == true ? null : url,
+            notificationId: notificationId?.isEmpty == true ? null : notificationId,
+          ),
+        );
       },
     );
 
@@ -223,7 +231,11 @@ class PushNotificationService {
   Future<void> consumePendingOpenIfAny() async {
     final pending = await _local.consumePendingOpen();
     if (pending.url == null && pending.type == null) return;
-    await _routeNotificationTap(type: pending.type ?? 'other', url: pending.url);
+    await _routeNotificationTap(
+      type: pending.type ?? 'other',
+      url: pending.url,
+      notificationId: pending.notificationId,
+    );
   }
 
   Future<String> _buildDeviceInfo() async {
@@ -258,7 +270,11 @@ class PushNotificationService {
       masterPhone: user?.phoneNumber,
     );
     await _mirrorAndRefresh(entity);
-    await _routeNotificationTap(type: entity.type, url: entity.url);
+    await _routeNotificationTap(
+      type: entity.type,
+      url: entity.url,
+      notificationId: entity.id,
+    );
   }
 
   Future<void> _storePendingOpenFromMessage(RemoteMessage message) async {
@@ -268,7 +284,11 @@ class PushNotificationService {
       masterPhone: user?.phoneNumber,
     );
     await _local.upsert(entity);
-    await _local.savePendingOpen(url: entity.url, type: entity.type);
+    await _local.savePendingOpen(
+      url: entity.url,
+      type: entity.type,
+      notificationId: entity.id,
+    );
   }
 
   Future<void> _mirrorAndRefresh(AppNotificationEntity entity) async {
@@ -334,14 +354,22 @@ class PushNotificationService {
       entity.title,
       entity.message,
       NotificationDetails(android: androidDetails, iOS: iosDetails),
-      payload: '${entity.type}|${entity.url ?? ''}',
+      payload: '${entity.type}|${entity.url ?? ''}|${entity.id}',
     );
   }
 
   Future<void> _routeNotificationTap({
     required String type,
     String? url,
+    String? notificationId,
   }) async {
+    if (notificationId != null && notificationId.isNotEmpty) {
+      // Local read + POST /api/Notification/acknowledge/{notificationId}
+      await _ref
+          .read(notificationsControllerProvider.notifier)
+          .markAsRead(notificationId);
+    }
+
     final tab = tabIndexForNotificationType(type);
     if (tab != null) {
       _ref.read(bottomNavIndexProvider.notifier).state = tab;
@@ -350,8 +378,6 @@ class PushNotificationService {
     }
 
     // Fallback / unknown types → external browser.
-    await _local.savePendingOpen(url: url, type: type);
-    // Actual launch is handled by MainShell with snackbar support.
     _ref.read(pendingBrowserOpenProvider.notifier).state = url;
   }
 

@@ -53,6 +53,7 @@ class NotificationsController extends StateNotifier<NotificationsState> {
   }
 
   Future<void> markAsRead(String id) async {
+    // Local read + server acknowledge/{notificationId} when id is numeric.
     await _repository.markAsRead(id);
     if (state is NotificationsSuccess) {
       final current = state as NotificationsSuccess;
