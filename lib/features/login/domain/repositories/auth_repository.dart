@@ -17,5 +17,9 @@ abstract class AuthRepository {
 
   Future<UserEntity?> readCachedUser();
 
+  /// Calls `POST /api/Auth/logout`, then clears secure storage.
+  /// Always clears local session even if the server call fails.
+  Future<void> logout();
+
   Future<void> clearSession();
 }

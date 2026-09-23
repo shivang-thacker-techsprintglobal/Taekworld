@@ -13,6 +13,7 @@ abstract final class Api {
   static const String login = '/api/Auth/login';
   static const String profile = '/api/Auth/profile';
   static const String refreshToken = '/api/Auth/refresh-token';
+  static const String logout = '/api/Auth/logout';
 
   // Dashboard
   static String statistics(String dojangId) =>

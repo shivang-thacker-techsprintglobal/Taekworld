@@ -50,6 +50,15 @@ class AuthRemoteDataSource {
     }
   }
 
+  /// Ends the server session. Requires Bearer token (do not skip auth).
+  Future<void> logout() async {
+    try {
+      await _client.post<Map<String, dynamic>>(Api.logout, data: <String, dynamic>{});
+    } on DioException catch (error) {
+      throw mapDioException(error);
+    }
+  }
+
   AuthResponse _parseAuthResponse(Map<String, dynamic>? data) {
     if (data == null) {
       throw const UnknownNetworkException('Empty auth response.');

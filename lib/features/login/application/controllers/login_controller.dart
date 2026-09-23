@@ -60,10 +60,11 @@ class LoginController extends StateNotifier<LoginState> {
   }
 
   Future<void> logout() async {
+    // Order: delete-device (needs Bearer) → Auth/logout → clear local.
     try {
       await _ref.read(pushNotificationServiceProvider).unregisterDevice();
     } catch (_) {}
-    await _repository.clearSession();
+    await _repository.logout();
     _ref.read(currentUserProvider.notifier).state = null;
     state = const LoginState.initial();
   }

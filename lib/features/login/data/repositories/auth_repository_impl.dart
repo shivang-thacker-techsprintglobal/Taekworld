@@ -24,6 +24,9 @@ class AuthRepositoryImpl implements AuthRepository {
   static const _masterOnlyMessage =
       'This app is for school masters only. Please use an account with the master role.';
 
+  static const _unlinkedSchoolMessage =
+      'This account is not linked to a school. Please contact support.';
+
   @override
   Future<AuthSession> login({
     required String email,
@@ -41,7 +44,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final session = response.toSession();
-      _ensureMaster(session.user);
+      _ensureEligibleMaster(session.user);
       await _sessionStorage.saveSession(session);
       return session;
     } on Failure {
@@ -67,7 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
         RefreshTokenRequest(refreshToken: refresh),
       );
       final session = response.toSession();
-      _ensureMaster(session.user);
+      _ensureEligibleMaster(session.user);
       await _sessionStorage.saveSession(session);
       return session;
     } on Failure {
@@ -86,7 +89,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await _remote.getProfile();
       final session = response.toSession();
-      _ensureMaster(session.user);
+      _ensureEligibleMaster(session.user);
 
       // Profile may echo the request token; keep existing refresh if absent.
       final existingRefresh = await _sessionStorage.readRefreshToken();
@@ -121,6 +124,11 @@ class AuthRepositoryImpl implements AuthRepository {
     final cached = await _sessionStorage.readSession();
     if (cached == null) return null;
 
+    if (!_hasLinkedSchool(cached.user)) {
+      await _sessionStorage.clear();
+      return null;
+    }
+
     Future<AuthSession?> tryRefresh() async {
       try {
         return await refreshToken();
@@ -137,7 +145,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       return await getProfile();
     } on AuthFailure catch (failure) {
-      if (failure.message == _masterOnlyMessage) {
+      if (failure.message == _masterOnlyMessage ||
+          failure.message == _unlinkedSchoolMessage) {
         await _sessionStorage.clear();
         return null;
       }
@@ -154,13 +163,28 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> logout() async {
+    try {
+      await _remote.logout();
+    } catch (_) {
+      // Still clear local credentials even if the server call fails.
+    }
+    await _sessionStorage.clear();
+  }
+
+  @override
   Future<void> clearSession() => _sessionStorage.clear();
 
-  void _ensureMaster(UserEntity user) {
+  void _ensureEligibleMaster(UserEntity user) {
     if (!user.isMaster) {
       throw const AuthFailure(_masterOnlyMessage);
     }
+    if (!_hasLinkedSchool(user)) {
+      throw const AuthFailure(_unlinkedSchoolMessage);
+    }
   }
+
+  bool _hasLinkedSchool(UserEntity user) => user.dojangId != null;
 
   Failure _mapNetworkException(NetworkException error) {
     return switch (error) {
