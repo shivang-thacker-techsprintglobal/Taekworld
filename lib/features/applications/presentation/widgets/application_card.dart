@@ -192,11 +192,11 @@ class ApplicationCard extends StatelessWidget {
   }
 
   String _viewedLabel(ApplicationItemEntity item) {
-    final raw = item.viewedDateFormatted.trim().isNotEmpty
-        ? item.viewedDateFormatted.trim()
-        : (item.viewedDate ?? '').trim();
+    // Prefer full UTC viewedDate (has time) over date-only viewedDateFormatted.
+    final raw = (item.viewedDate?.trim().isNotEmpty ?? false)
+        ? item.viewedDate!.trim()
+        : item.viewedDateFormatted.trim();
     if (raw.toLowerCase().startsWith('viewed')) {
-      // Already prefixed; still normalize any embedded date to M/D/YYYY.
       final withoutPrefix = raw.replaceFirst(
         RegExp(r'^viewed\s+on\s+', caseSensitive: false),
         '',

@@ -354,6 +354,8 @@ class PushNotificationService {
       playSound: true,
       enableVibration: true,
       sound: const RawResourceAndroidNotificationSound('notification'),
+      icon: '@drawable/ic_notification',
+      color: const Color(0xFFFF0000),
       enableLights: true,
       ledColor: const Color(0xFFFF0000),
       styleInformation: BigTextStyleInformation(

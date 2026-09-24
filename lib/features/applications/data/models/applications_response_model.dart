@@ -75,12 +75,20 @@ class ApplicationItemModel {
     final viewedFormatted =
         (json['viewedDateFormatted'] as String?)?.trim() ?? '';
 
+    // Prefer full UTC timestamp when present (ISO with time).
+    final applicationDateRaw =
+        (json['applicationDateValue'] as String?)?.trim().isNotEmpty == true
+            ? json['applicationDateValue'] as String
+            : (json['applicationDate'] as String? ?? '');
+
+    final viewedDateRaw = (json['viewedDate'] as String?)?.trim();
+
     return ApplicationItemModel(
       id: json['id'] as int? ?? 0,
       studentName: name.isNotEmpty ? name : 'Student',
       parentName:
           json['parentName'] as String? ?? json['parentFullName'] as String? ?? 'N/A',
-      applicationDate: json['applicationDate'] as String? ?? '',
+      applicationDate: applicationDateRaw,
       status: json['status'] as String? ??
           json['applicationStatus'] as String? ??
           'Pending',
@@ -91,7 +99,7 @@ class ApplicationItemModel {
           json['parentPhoneNumber'] as String? ??
           '',
       isViewed: _readBool(json['isViewed']),
-      viewedDate: json['viewedDate'] as String?,
+      viewedDate: viewedDateRaw?.isNotEmpty == true ? viewedDateRaw : null,
       viewedDateFormatted: viewedFormatted,
       paymentStatus: json['paymentStatus'] as String?,
       paymentAmount: (json['paymentAmount'] as num?)?.toDouble(),

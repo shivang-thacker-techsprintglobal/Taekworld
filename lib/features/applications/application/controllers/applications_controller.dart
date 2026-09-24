@@ -56,8 +56,8 @@ class ApplicationsController extends StateNotifier<ApplicationsState> {
   void markAsViewed(int id) {
     if (state is ApplicationsSuccess) {
       final current = state as ApplicationsSuccess;
-      final stamp = AppDateFormat.display(
-        DateTime.now().toIso8601String().split('T').first,
+      final stamp = AppDateFormat.displayDateTime(
+        DateTime.now().toUtc().toIso8601String(),
       );
 
       final updatedPending = current.pending.map((item) {

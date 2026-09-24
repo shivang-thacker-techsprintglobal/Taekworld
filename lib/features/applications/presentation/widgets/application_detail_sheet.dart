@@ -220,7 +220,7 @@ class ApplicationDetailSheet extends ConsumerWidget {
                       InfoRow(label: 'Last Name', value: detail.studentLastName, labelWidth: 120),
                       InfoRow(
                         label: 'Date of Birth',
-                        value: AppDateFormat.display(detail.dateOfBirth),
+                        value: AppDateFormat.displayDate(detail.dateOfBirth),
                         labelWidth: 120,
                       ),
                       InfoRow(label: 'Gender', value: detail.gender, labelWidth: 120),
@@ -286,7 +286,7 @@ class ApplicationDetailSheet extends ConsumerWidget {
                     rows: [
                       InfoRow(
                         label: 'Application Date',
-                        value: AppDateFormat.display(detail.applicationDate),
+                        value: AppDateFormat.displayDateTime(detail.applicationDate),
                         labelWidth: 120,
                       ),
                       InfoRow(
@@ -298,7 +298,7 @@ class ApplicationDetailSheet extends ConsumerWidget {
                       if (detail.viewedDate != null && detail.viewedDate!.isNotEmpty)
                         InfoRow(
                           label: 'Viewed Date',
-                          value: AppDateFormat.display(detail.viewedDate),
+                          value: AppDateFormat.displayDateTime(detail.viewedDate),
                           labelWidth: 120,
                         ),
                     ],

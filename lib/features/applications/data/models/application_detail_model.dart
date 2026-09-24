@@ -80,7 +80,10 @@ class ApplicationDetailModel {
       currentMedication: json['currentMedication'] as String? ?? '',
       applicationDate: json['applicationDate'] as String? ?? '',
       applicationStatus: json['applicationStatus'] as String? ?? json['status'] as String? ?? 'Pending',
-      viewedDate: json['viewedDate'] as String?,
+      // Detail payload uses receiptDate when first viewed; viewedDate is also accepted.
+      viewedDate: (json['viewedDate'] as String?)?.trim().isNotEmpty == true
+          ? json['viewedDate'] as String?
+          : (json['receiptDate'] as String?),
       enrollmentDate: json['enrollmentDate'] as String?,
       hasPaymentMethod: json['hasPaymentMethod'] as bool? ?? false,
     );

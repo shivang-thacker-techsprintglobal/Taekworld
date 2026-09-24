@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- FCM / local notification accent (Integration Spec #FF0000). -->
+    <color name="notification_color">#FF0000</color>
 </resources>
