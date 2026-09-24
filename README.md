@@ -109,6 +109,72 @@ Auth tokens are stored in the platform secure store (`flutter_secure_storage`), 
 
 ---
 
+## Release builds (UAT / production)
+
+Version is set in `pubspec.yaml` (`2.0.0+6` and up). Do **not** commit keystores, `android/key.properties`, or Firebase service-account keys.
+
+### Android App Bundle (`.aab`)
+
+Taekworld re-signs for Play Console. If `android/key.properties` is absent, the release build is signed with the **debug** key (acceptable for hand-over).
+
+```bash
+fvm flutter pub get
+
+# Production (required dart-define for store / hand-over AAB)
+fvm flutter build appbundle --release \
+  --dart-define=API_BASE_URL=https://api.taekworld.com
+
+# UAT (QA / internal testing)
+fvm flutter build appbundle --release \
+  --dart-define=API_ENV=uat
+# or:
+# fvm flutter build appbundle --release \
+#   --dart-define=API_BASE_URL=https://api-uat-433251623503.us-east4.run.app
+```
+
+Output:
+
+```text
+build/app/outputs/bundle/release/app-release.aab
+```
+
+Optional APK for sideload testing:
+
+```bash
+fvm flutter build apk --release \
+  --dart-define=API_BASE_URL=https://api.taekworld.com
+```
+
+### iOS (Xcode archive)
+
+Taekworld archives and signs with team **DGLC43XKDD**, then uploads to App Store Connect / TestFlight. Vendor delivers an Xcode-archivable project (no store upload required from vendor).
+
+```bash
+fvm flutter pub get
+
+# Production
+fvm flutter build ipa --release \
+  --dart-define=API_BASE_URL=https://api.taekworld.com \
+  --no-codesign
+
+# UAT
+fvm flutter build ipa --release \
+  --dart-define=API_ENV=uat \
+  --no-codesign
+```
+
+Or open `ios/Runner.xcworkspace` in Xcode → select a generic iOS Device → **Product → Archive**. Pass the same `--dart-define` via Xcode / `flutter build ios` before archiving:
+
+```bash
+fvm flutter build ios --release \
+  --dart-define=API_BASE_URL=https://api.taekworld.com \
+  --no-codesign
+```
+
+Bundle ID: `com.taekworld.master`.
+
+---
+
 ## Code generation
 
 After changing Freezed / JSON models:
