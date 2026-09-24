@@ -32,6 +32,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final local = NotificationsLocalDatasource();
   final entity = notificationFromRemoteMessage(message, masterPhone: null);
   await local.upsert(entity);
+  final serverId = int.tryParse(entity.id.trim());
+  if (serverId != null && serverId > 0) {
+    await local.enqueueUndeliveredIds([serverId]);
+  }
   final unread = await local.unreadCount();
   try {
     await AppBadgePlus.updateBadge(unread);
@@ -284,6 +288,10 @@ class PushNotificationService {
       masterPhone: user?.phoneNumber,
     );
     await _local.upsert(entity);
+    final serverId = int.tryParse(entity.id.trim());
+    if (serverId != null && serverId > 0) {
+      await _local.enqueueUndeliveredIds([serverId]);
+    }
     await _local.savePendingOpen(
       url: entity.url,
       type: entity.type,

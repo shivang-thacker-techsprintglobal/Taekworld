@@ -142,11 +142,11 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen>
           onTap: (index) {
             ref.read(bottomNavIndexProvider.notifier).state = index;
             if (index == 3) {
-              // Opening Notifications marks everything read (UI-SPEC §3.2).
+              // mark-delivered only after inbox is displayed — not mark-all-read.
               unawaited(
                 ref
                     .read(notificationsControllerProvider.notifier)
-                    .markAllAsRead(),
+                    .onInboxOpened(),
               );
             }
           },

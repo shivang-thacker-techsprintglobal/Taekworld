@@ -23,8 +23,13 @@ abstract class NotificationsRepository {
   Future<void> deleteDevice({required String fcmToken});
 
   /// Cold-start catch-up from the pending queue (optional path).
+  /// Upserts locally as unread; does **not** call mark-delivered — that runs
+  /// after the Notifications inbox is displayed.
   Future<int> syncPendingNotifications({
     required String dojangId,
     required String masterPhone,
   });
+
+  /// Call after inbox items are shown so they drop out of server `pending`.
+  Future<void> markDisplayedAsDelivered();
 }

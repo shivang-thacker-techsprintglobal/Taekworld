@@ -52,6 +52,15 @@ class NotificationsController extends StateNotifier<NotificationsState> {
     }
   }
 
+  /// Notifications tab opened: mark-delivered after inbox is shown.
+  /// Does **not** clear unread UI / badge — that happens on item tap or
+  /// explicit "Mark all as read".
+  Future<void> onInboxOpened() async {
+    try {
+      await _repository.markDisplayedAsDelivered();
+    } catch (_) {}
+  }
+
   Future<void> markAsRead(String id) async {
     // Local read + server acknowledge/{notificationId} when id is numeric.
     await _repository.markAsRead(id);

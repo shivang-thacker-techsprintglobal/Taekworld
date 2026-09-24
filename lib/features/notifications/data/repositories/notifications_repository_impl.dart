@@ -36,8 +36,14 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   Future<void> clearAll() => _local.clearAll();
 
   @override
-  Future<AppNotificationEntity> addNotification(AppNotificationEntity item) =>
-      _local.upsert(item);
+  Future<AppNotificationEntity> addNotification(AppNotificationEntity item) async {
+    final saved = await _local.upsert(item);
+    final serverId = int.tryParse(item.id.trim());
+    if (serverId != null && serverId > 0) {
+      await _local.enqueueUndeliveredIds([serverId]);
+    }
+    return saved;
+  }
 
   @override
   Future<int> unreadCount() => _local.unreadCount();
@@ -84,6 +90,7 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         ? 'https://www.blackbelthw.com/${masterPhone.trim()}'
         : 'https://www.blackbelthw.com/master';
 
+    final deliveredIds = <int>[];
     for (final item in pending.notifications) {
       // Use server notification id so acknowledge/{id} works on open.
       await _local.upsert(
@@ -98,18 +105,30 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
           entityId: item.entityId.isNotEmpty ? item.entityId : null,
         ),
       );
+      deliveredIds.add(item.id);
     }
 
-    try {
-      await _remote.markDelivered(
-        notificationIds: pending.notifications.map((e) => e.id).toList(),
-        deviceId: deviceId,
-      );
-    } catch (_) {
-      // History is already mirrored locally; delivery ack can retry later.
-    }
+    // Defer mark-delivered until the inbox is actually displayed.
+    await _local.enqueueUndeliveredIds(deliveredIds);
 
     return pending.notifications.length;
+  }
+
+  @override
+  Future<void> markDisplayedAsDelivered() async {
+    final ids = await _local.readUndeliveredIds();
+    if (ids.isEmpty) return;
+
+    final deviceId = await _local.getOrCreateDeviceId();
+    try {
+      await _remote.markDelivered(
+        notificationIds: ids,
+        deviceId: deviceId,
+      );
+      await _local.clearUndeliveredIds(ids);
+    } catch (_) {
+      // Keep queued ids and retry the next time the inbox is opened.
+    }
   }
 
   /// Resolves a local inbox id to the server notification id, if any.

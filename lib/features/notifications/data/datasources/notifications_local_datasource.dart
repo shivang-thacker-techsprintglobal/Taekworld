@@ -13,6 +13,7 @@ class NotificationsLocalDatasource {
   NotificationsLocalDatasource([SharedPreferences? prefs]) : _prefs = prefs;
 
   static const _historyKey = 'notifications.history_v1';
+  static const _undeliveredIdsKey = 'notifications.undelivered_ids_v1';
   static const _deviceIdKey = 'notifications.device_id';
   static const _fcmTokenKey = 'notifications.fcm_token';
   static const _lastRegisterKey = 'notifications.last_register_at';
@@ -141,6 +142,52 @@ class NotificationsLocalDatasource {
     return item;
   }
 
+  /// Server notification ids that still need `mark-delivered` after the
+  /// inbox has been shown (not when pending is first synced).
+  Future<List<int>> readUndeliveredIds() async {
+    final prefs = await _ensurePrefs();
+    final raw = prefs.getStringList(_undeliveredIdsKey) ?? const <String>[];
+    return raw
+        .map(int.tryParse)
+        .whereType<int>()
+        .toList(growable: false);
+  }
+
+  Future<void> enqueueUndeliveredIds(Iterable<int> ids) async {
+    final incoming = ids.where((id) => id > 0).toSet();
+    if (incoming.isEmpty) return;
+    final prefs = await _ensurePrefs();
+    final current = (prefs.getStringList(_undeliveredIdsKey) ?? const <String>[])
+        .map(int.tryParse)
+        .whereType<int>()
+        .toSet();
+    current.addAll(incoming);
+    await prefs.setStringList(
+      _undeliveredIdsKey,
+      current.map((e) => '$e').toList(),
+    );
+  }
+
+  Future<void> clearUndeliveredIds([Iterable<int>? ids]) async {
+    final prefs = await _ensurePrefs();
+    if (ids == null) {
+      await prefs.remove(_undeliveredIdsKey);
+      return;
+    }
+    final remove = ids.toSet();
+    final current = (prefs.getStringList(_undeliveredIdsKey) ?? const <String>[])
+        .map(int.tryParse)
+        .whereType<int>()
+        .where((id) => !remove.contains(id))
+        .map((e) => '$e')
+        .toList();
+    if (current.isEmpty) {
+      await prefs.remove(_undeliveredIdsKey);
+    } else {
+      await prefs.setStringList(_undeliveredIdsKey, current);
+    }
+  }
+
   Future<void> markAllAsRead() async {
     final current = await getNotifications();
     await _writeAll(current.map((n) => n.copyWith(isRead: true)).toList());
@@ -161,6 +208,7 @@ class NotificationsLocalDatasource {
   Future<void> clearAll() async {
     final prefs = await _ensurePrefs();
     await prefs.remove(_historyKey);
+    await prefs.remove(_undeliveredIdsKey);
   }
 
   Future<int> unreadCount() async {
