@@ -10,3 +10,6 @@ final notificationsBadgeProvider = StateProvider<int>((ref) => 0);
 
 /// URL queued by a notification tap for MainShell to open externally.
 final pendingBrowserOpenProvider = StateProvider<String?>((ref) => null);
+
+/// Application id queued by a NewApplication push tap to open detail sheet.
+final pendingApplicationOpenProvider = StateProvider<String?>((ref) => null);

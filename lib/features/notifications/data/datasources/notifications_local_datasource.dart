@@ -21,6 +21,8 @@ class NotificationsLocalDatasource {
   static const _pendingOpenUrlKey = 'notifications.pending_open_url';
   static const _pendingOpenTypeKey = 'notifications.pending_open_type';
   static const _pendingOpenIdKey = 'notifications.pending_open_id';
+  static const _pendingOpenEntityIdKey = 'notifications.pending_open_entity_id';
+  static const _registerNeedsRetryKey = 'notifications.register_needs_retry';
 
   SharedPreferences? _prefs;
 
@@ -64,6 +66,20 @@ class NotificationsLocalDatasource {
     await prefs.setString(_lastRegisterKey, at.toUtc().toIso8601String());
   }
 
+  Future<bool> readRegisterNeedsRetry() async {
+    final prefs = await _ensurePrefs();
+    return prefs.getBool(_registerNeedsRetryKey) ?? false;
+  }
+
+  Future<void> setRegisterNeedsRetry(bool value) async {
+    final prefs = await _ensurePrefs();
+    if (value) {
+      await prefs.setBool(_registerNeedsRetryKey, true);
+    } else {
+      await prefs.remove(_registerNeedsRetryKey);
+    }
+  }
+
   Future<bool> wasPermissionPromptShown() async {
     final prefs = await _ensurePrefs();
     return prefs.getBool(_permissionAskedKey) ?? false;
@@ -78,6 +94,7 @@ class NotificationsLocalDatasource {
     String? url,
     String? type,
     String? notificationId,
+    String? entityId,
   }) async {
     final prefs = await _ensurePrefs();
     if (url == null || url.isEmpty) {
@@ -95,18 +112,35 @@ class NotificationsLocalDatasource {
     } else {
       await prefs.setString(_pendingOpenIdKey, notificationId);
     }
+    if (entityId == null || entityId.isEmpty) {
+      await prefs.remove(_pendingOpenEntityIdKey);
+    } else {
+      await prefs.setString(_pendingOpenEntityIdKey, entityId);
+    }
   }
 
-  Future<({String? url, String? type, String? notificationId})>
-      consumePendingOpen() async {
+  Future<
+      ({
+        String? url,
+        String? type,
+        String? notificationId,
+        String? entityId,
+      })> consumePendingOpen() async {
     final prefs = await _ensurePrefs();
     final url = prefs.getString(_pendingOpenUrlKey);
     final type = prefs.getString(_pendingOpenTypeKey);
     final notificationId = prefs.getString(_pendingOpenIdKey);
+    final entityId = prefs.getString(_pendingOpenEntityIdKey);
     await prefs.remove(_pendingOpenUrlKey);
     await prefs.remove(_pendingOpenTypeKey);
     await prefs.remove(_pendingOpenIdKey);
-    return (url: url, type: type, notificationId: notificationId);
+    await prefs.remove(_pendingOpenEntityIdKey);
+    return (
+      url: url,
+      type: type,
+      notificationId: notificationId,
+      entityId: entityId,
+    );
   }
 
   Future<List<AppNotificationEntity>> getNotifications() async {

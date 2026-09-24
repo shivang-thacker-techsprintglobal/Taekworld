@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +10,7 @@ import '../../../../core/providers/current_user_provider.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loader.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../main_shell/application/shell_providers.dart';
 import '../../application/controllers/applications_controller.dart';
 import '../../application/controllers/applications_state.dart';
 import '../../domain/entities/application_item_entity.dart';
@@ -26,6 +29,14 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
   @override
   void initState() {
     super.initState();
+    // Consume a pending open that may have been set before this listen attached.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final pending = ref.read(pendingApplicationOpenProvider);
+      if (pending == null || pending.isEmpty) return;
+      ref.read(pendingApplicationOpenProvider.notifier).state = null;
+      unawaited(_openDetailFromNotification(pending));
+    });
     // UI-SPEC §4.4 — load 0.5s after mount.
     Future<void>.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
@@ -60,9 +71,46 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     );
   }
 
+  Future<void> _openDetailFromNotification(String applicationId) async {
+    final user = ref.read(currentUserProvider);
+    final dojangId = user?.academyId;
+    if (dojangId != null && dojangId.isNotEmpty) {
+      await ref.read(applicationsControllerProvider.notifier).loadApplications(
+            dojangId,
+            isSilent: true,
+          );
+    }
+    if (!mounted) return;
+
+    final state = ref.read(applicationsControllerProvider);
+    var studentName = 'Student';
+    if (state is ApplicationsSuccess) {
+      final match = [...state.pending, ...state.history].where(
+        (item) => '${item.id}' == applicationId,
+      );
+      if (match.isNotEmpty) {
+        final item = match.first;
+        studentName = item.studentName;
+        ref.read(applicationsControllerProvider.notifier).markAsViewed(item.id);
+      }
+    }
+
+    await ApplicationDetailSheet.show(
+      context,
+      applicationId: applicationId,
+      initialStudentName: studentName,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(applicationsControllerProvider);
+
+    ref.listen<String?>(pendingApplicationOpenProvider, (previous, next) {
+      if (next == null || next.isEmpty) return;
+      ref.read(pendingApplicationOpenProvider.notifier).state = null;
+      unawaited(_openDetailFromNotification(next));
+    });
 
     int unviewedCount = 0;
     final isRefreshing =

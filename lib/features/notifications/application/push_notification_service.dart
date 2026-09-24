@@ -56,6 +56,7 @@ class PushNotificationService {
   StreamSubscription<RemoteMessage>? _onMessageSub;
   StreamSubscription<RemoteMessage>? _onOpenedSub;
   StreamSubscription<String>? _onTokenSub;
+  bool _registerRetryInFlight = false;
 
   NotificationsLocalDatasource get _local =>
       _ref.read(notificationsLocalDatasourceProvider);
@@ -100,16 +101,19 @@ class PushNotificationService {
       onDidReceiveNotificationResponse: (response) {
         final payload = response.payload;
         if (payload == null || payload.isEmpty) return;
-        // payload format: type|url|notificationId
+        // payload: type|url|notificationId|entityId
         final parts = payload.split('|');
         final type = parts.isNotEmpty ? parts[0] : 'other';
         final url = parts.length > 1 ? parts[1] : null;
         final notificationId = parts.length > 2 ? parts[2] : null;
+        final entityId = parts.length > 3 ? parts[3] : null;
         unawaited(
           _routeNotificationTap(
             type: type,
             url: url?.isEmpty == true ? null : url,
-            notificationId: notificationId?.isEmpty == true ? null : notificationId,
+            notificationId:
+                notificationId?.isEmpty == true ? null : notificationId,
+            entityId: entityId?.isEmpty == true ? null : entityId,
           ),
         );
       },
@@ -165,7 +169,8 @@ class PushNotificationService {
     final dojangId = user.dojangId;
     if (dojangId == null) return;
 
-    if (!force) {
+    final needsRetry = await _local.readRegisterNeedsRetry();
+    if (!force && !needsRetry) {
       final last = await _local.readLastRegisterAt();
       if (last != null &&
           DateTime.now().difference(last) <
@@ -179,33 +184,70 @@ class PushNotificationService {
         settings.authorizationStatus == AuthorizationStatus.provisional;
     if (!allowed) return;
 
+    // Non-blocking: retries run in the background with backoff.
+    unawaited(
+      _registerDeviceWithBackoff(
+        dojangId: dojangId,
+        academyId: user.academyId,
+        masterPhone: user.phoneNumber,
+      ),
+    );
+  }
+
+  /// Integration Spec: retry on failure with 5s doubling backoff, max 5 tries.
+  Future<void> _registerDeviceWithBackoff({
+    required int dojangId,
+    required String academyId,
+    required String masterPhone,
+  }) async {
+    if (_registerRetryInFlight) return;
+    _registerRetryInFlight = true;
+
+    var delay = const Duration(seconds: 5);
     try {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token == null || token.isEmpty) return;
+      for (var attempt = 1; attempt <= 5; attempt++) {
+        try {
+          final token = await FirebaseMessaging.instance.getToken();
+          if (token == null || token.isEmpty) {
+            throw StateError('FCM token unavailable');
+          }
 
-      await _local.saveFcmToken(token);
-      final deviceInfo = await _buildDeviceInfo();
-      await _ref.read(notificationsRepositoryProvider).registerDevice(
-            fcmToken: token,
-            platform: Platform.isIOS ? 'ios' : 'android',
-            dojangId: dojangId,
-            deviceInfo: deviceInfo,
-          );
-      await _local.saveLastRegisterAt(DateTime.now());
+          await _local.saveFcmToken(token);
+          final deviceInfo = await _buildDeviceInfo();
+          await _ref.read(notificationsRepositoryProvider).registerDevice(
+                fcmToken: token,
+                platform: Platform.isIOS ? 'ios' : 'android',
+                dojangId: dojangId,
+                deviceInfo: deviceInfo,
+              );
+          await _local.saveLastRegisterAt(DateTime.now());
+          await _local.setRegisterNeedsRetry(false);
 
-      // Optional pending-queue catch-up after (re)register.
-      await _ref.read(notificationsRepositoryProvider).syncPendingNotifications(
-            dojangId: user.academyId,
-            masterPhone: user.phoneNumber,
-          );
-      await _ref
-          .read(notificationsControllerProvider.notifier)
-          .loadNotifications(isSilent: true);
-      await _syncAppBadge();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('FCM register-device failed: $e');
+          await _ref
+              .read(notificationsRepositoryProvider)
+              .syncPendingNotifications(
+                dojangId: academyId,
+                masterPhone: masterPhone,
+              );
+          await _ref
+              .read(notificationsControllerProvider.notifier)
+              .loadNotifications(isSilent: true);
+          await _syncAppBadge();
+          return;
+        } catch (e) {
+          await _local.setRegisterNeedsRetry(true);
+          if (kDebugMode) {
+            debugPrint(
+              'FCM register-device failed (attempt $attempt/5): $e',
+            );
+          }
+          if (attempt >= 5) return;
+          await Future<void>.delayed(delay);
+          delay *= 2;
+        }
       }
+    } finally {
+      _registerRetryInFlight = false;
     }
   }
 
@@ -235,11 +277,16 @@ class PushNotificationService {
 
   Future<void> consumePendingOpenIfAny() async {
     final pending = await _local.consumePendingOpen();
-    if (pending.url == null && pending.type == null) return;
+    if (pending.url == null &&
+        pending.type == null &&
+        pending.entityId == null) {
+      return;
+    }
     await _routeNotificationTap(
       type: pending.type ?? 'other',
       url: pending.url,
       notificationId: pending.notificationId,
+      entityId: pending.entityId,
     );
   }
 
@@ -279,6 +326,7 @@ class PushNotificationService {
       type: entity.type,
       url: entity.url,
       notificationId: entity.id,
+      entityId: entity.entityId,
     );
   }
 
@@ -297,6 +345,7 @@ class PushNotificationService {
       url: entity.url,
       type: entity.type,
       notificationId: entity.id,
+      entityId: entity.entityId,
     );
   }
 
@@ -379,7 +428,8 @@ class PushNotificationService {
       entity.title,
       entity.message,
       NotificationDetails(android: androidDetails, iOS: iosDetails),
-      payload: '${entity.type}|${entity.url ?? ''}|${entity.id}',
+      payload:
+          '${entity.type}|${entity.url ?? ''}|${entity.id}|${entity.entityId ?? ''}',
     );
   }
 
@@ -387,6 +437,7 @@ class PushNotificationService {
     required String type,
     String? url,
     String? notificationId,
+    String? entityId,
   }) async {
     if (notificationId != null && notificationId.isNotEmpty) {
       // Local read + POST /api/Notification/acknowledge/{notificationId}
@@ -397,6 +448,13 @@ class PushNotificationService {
 
     final tab = tabIndexForNotificationType(type);
     if (tab != null) {
+      // NewApplication → Applications list with that application selected.
+      final normalized = AppNotificationEntity.normalizeType(type);
+      final appId = entityId?.trim();
+      if (normalized == 'application' && appId != null && appId.isNotEmpty) {
+        _ref.read(pendingApplicationOpenProvider.notifier).state = appId;
+      }
+
       _ref.read(bottomNavIndexProvider.notifier).state = tab;
       _refreshRelatedTabs(type);
       return;
