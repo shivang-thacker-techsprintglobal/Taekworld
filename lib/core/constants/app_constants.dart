@@ -11,8 +11,8 @@ abstract final class AppConstants {
   static const bool useMockData = false;
 
   static const String webBaseUrl = 'https://www.blackbelthw.com';
-  static const String notificationChannelId = 'taekworld_alerts_v2';
-  static const String notificationChannelName = 'Taekworld Alerts';
+  static const String notificationChannelId = 'taekworld_fcm_sound_v1';
+  static const String notificationChannelName = 'Taekworld alerts';
   static const int maxLocalNotifications = 100;
   static const Duration deviceReregisterInterval = Duration(days: 1);
 }

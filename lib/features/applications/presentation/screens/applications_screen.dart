@@ -177,7 +177,8 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: state.pending.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10.0),
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 10.0),
                                 itemBuilder: (context, index) {
                                   final item = state.pending[index];
                                   return ApplicationCard(
@@ -209,7 +210,8 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: state.history.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10.0),
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 10.0),
                                 itemBuilder: (context, index) {
                                   final item = state.history[index];
                                   return ApplicationCard(

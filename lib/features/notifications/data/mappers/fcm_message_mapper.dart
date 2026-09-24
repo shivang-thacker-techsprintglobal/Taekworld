@@ -49,6 +49,11 @@ AppNotificationEntity notificationFromRemoteMessage(
 
 /// Tab index for in-app navigation from a notification type.
 ///
+/// Acceptance mapping:
+/// - NewApplication → Applications (1)
+/// - NewTrialMember → Trial Members (2)
+/// - NewRegistration / ParentInvitation → My Dojang / Dashboard (0)
+///
 /// Returns null when the app should fall back to the website browser hand-off.
 int? tabIndexForNotificationType(String type) {
   switch (AppNotificationEntity.normalizeType(type)) {
@@ -56,6 +61,9 @@ int? tabIndexForNotificationType(String type) {
       return 1;
     case 'trial':
       return 2;
+    case 'registration':
+    case 'invitation':
+      return 0;
     default:
       return null;
   }

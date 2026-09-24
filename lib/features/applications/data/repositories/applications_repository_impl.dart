@@ -14,7 +14,7 @@ class ApplicationsRepositoryImpl implements ApplicationsRepository {
   final ApplicationsRemoteDataSource _remote;
 
   // In-memory cache for mock updates during runtime
-  static List<ApplicationItemEntity> _mockPending = [
+  static final List<ApplicationItemEntity> _mockPending = [
     const ApplicationItemEntity(
       id: 501,
       studentName: 'Olivia Davis',
@@ -43,7 +43,7 @@ class ApplicationsRepositoryImpl implements ApplicationsRepository {
     ),
   ];
 
-  static List<ApplicationItemEntity> _mockHistory = [
+  static final List<ApplicationItemEntity> _mockHistory = [
     const ApplicationItemEntity(
       id: 480,
       studentName: 'Lucas Brown',

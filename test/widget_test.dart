@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:taekworld/core/constants/app_constants.dart';
 import 'package:taekworld/features/login/application/controllers/login_controller.dart';
 import 'package:taekworld/features/login/application/controllers/login_state.dart';
 import 'package:taekworld/features/login/domain/entities/auth_session.dart';
@@ -37,6 +36,9 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<AuthSession?> restoreSession() async => null;
+
+  @override
+  Future<void> logout() async {}
 }
 
 void main() {
@@ -54,8 +56,7 @@ void main() {
       ),
     );
 
-    // Splash is shown for a minimum duration before AuthGate routes onward.
-    await tester.pump(AppConstants.splashMinDuration);
+    // AuthGate routes to Login when session check finishes as logged-out.
     await tester.pumpAndSettle();
 
     expect(find.text('Login'), findsWidgets);

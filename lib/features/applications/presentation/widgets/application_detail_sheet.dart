@@ -10,7 +10,6 @@ import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loader.dart';
 import '../../../../core/widgets/info_row.dart';
 import '../../application/controllers/application_detail_controller.dart';
-import '../../domain/entities/application_detail_entity.dart';
 
 /// Modal Bottom Sheet for Student Application Details (90% screen height) per UI-SPEC §4.5.
 class ApplicationDetailSheet extends ConsumerWidget {

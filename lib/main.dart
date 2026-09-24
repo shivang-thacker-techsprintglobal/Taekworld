@@ -149,8 +149,7 @@ class _TaekworldAppState extends ConsumerState<TaekworldApp> {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(context),
-      darkTheme: AppTheme.dark(context),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       home: const AuthGate(),
     );
   }

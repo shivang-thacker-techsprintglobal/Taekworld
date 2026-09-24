@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/providers/current_user_provider.dart';
 import '../../applications/application/controllers/applications_controller.dart';
+import '../../dashboard/application/controllers/dashboard_controller.dart';
 import '../../main_shell/application/shell_providers.dart';
 import '../../trial_members/application/controllers/trial_members_controller.dart';
 import '../domain/entities/app_notification_entity.dart';
@@ -320,12 +321,26 @@ class PushNotificationService {
             .read(applicationsControllerProvider.notifier)
             .loadApplications(dojangId, isSilent: true),
       );
-    } else if (normalized == 'trial' || normalized == 'registration') {
+    } else if (normalized == 'trial') {
       unawaited(
         _ref
             .read(trialMembersControllerProvider.notifier)
             .loadTrialMembers(dojangId, isSilent: true),
       );
+    } else if (normalized == 'registration' || normalized == 'invitation') {
+      // Acceptance: these map to Dashboard; refresh counts after push.
+      unawaited(
+        _ref
+            .read(dashboardControllerProvider.notifier)
+            .loadStatistics(dojangId, isSilent: true),
+      );
+      if (normalized == 'registration') {
+        unawaited(
+          _ref
+              .read(trialMembersControllerProvider.notifier)
+              .loadTrialMembers(dojangId, isSilent: true),
+        );
+      }
     }
   }
 
