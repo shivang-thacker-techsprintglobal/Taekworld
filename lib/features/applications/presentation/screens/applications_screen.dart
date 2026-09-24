@@ -65,6 +65,8 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     final state = ref.watch(applicationsControllerProvider);
 
     int unviewedCount = 0;
+    final isRefreshing =
+        state is ApplicationsSuccess && state.isRefreshing;
     if (state is ApplicationsSuccess) {
       unviewedCount = state.unviewedCount;
     }
@@ -111,9 +113,20 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
             tooltip: 'Refresh',
-            onPressed: () => _loadData(),
+            onPressed: isRefreshing
+                ? null
+                : () => _loadData(isSilent: state is ApplicationsSuccess),
+            icon: isRefreshing
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.refresh, color: Colors.white),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../../core/utils/app_date_format.dart';
 import '../../../main_shell/application/shell_providers.dart';
 import '../../data/repositories/applications_repository_impl.dart';
 import '../../domain/repositories/applications_repository.dart';
@@ -14,13 +15,14 @@ class ApplicationsController extends StateNotifier<ApplicationsState> {
   final Ref _ref;
 
   Future<void> loadApplications(String dojangId, {bool isSilent = false}) async {
-    if (!isSilent) {
-      if (state is! ApplicationsSuccess) {
-        state = const ApplicationsLoading();
-      }
-    } else if (state is ApplicationsSuccess) {
+    // Keep list visible while refreshing (same as Trial Members / UI-SPEC).
+    if (state is ApplicationsSuccess) {
       final current = state as ApplicationsSuccess;
-      state = current.copyWith(isRefreshing: true);
+      if (!current.isRefreshing) {
+        state = current.copyWith(isRefreshing: true);
+      }
+    } else if (!isSilent) {
+      state = const ApplicationsLoading();
     }
 
     try {
@@ -54,11 +56,9 @@ class ApplicationsController extends StateNotifier<ApplicationsState> {
   void markAsViewed(int id) {
     if (state is ApplicationsSuccess) {
       final current = state as ApplicationsSuccess;
-      final today = DateTime.now();
-      final stamp =
-          '${today.year.toString().padLeft(4, '0')}-'
-          '${today.month.toString().padLeft(2, '0')}-'
-          '${today.day.toString().padLeft(2, '0')}';
+      final stamp = AppDateFormat.display(
+        DateTime.now().toIso8601String().split('T').first,
+      );
 
       final updatedPending = current.pending.map((item) {
         if (item.id == id) {

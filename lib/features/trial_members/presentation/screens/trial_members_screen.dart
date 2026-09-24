@@ -79,6 +79,8 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
     final state = ref.watch(trialMembersControllerProvider);
 
     int newMembersCount = 0;
+    final isRefreshing =
+        state is TrialMembersSuccess && state.isRefreshing;
     if (state is TrialMembersSuccess) {
       newMembersCount = state.newMembersCount;
     }
@@ -128,12 +130,20 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
             tooltip: 'Refresh',
-            // Non-blocking when list is already visible (UI-SPEC §4.6).
-            onPressed: () => _loadData(
-              isSilent: state is TrialMembersSuccess,
-            ),
+            onPressed: isRefreshing
+                ? null
+                : () => _loadData(isSilent: state is TrialMembersSuccess),
+            icon: isRefreshing
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.refresh, color: Colors.white),
           ),
         ],
       ),

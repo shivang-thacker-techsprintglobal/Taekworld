@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_text_style.dart';
+import '../../../../core/utils/app_date_format.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loader.dart';
 import '../../../../core/widgets/info_row.dart';
@@ -218,7 +219,11 @@ class ApplicationDetailSheet extends ConsumerWidget {
                     rows: [
                       InfoRow(label: 'First Name', value: detail.studentFirstName, labelWidth: 120),
                       InfoRow(label: 'Last Name', value: detail.studentLastName, labelWidth: 120),
-                      InfoRow(label: 'Date of Birth', value: detail.dateOfBirth, labelWidth: 120),
+                      InfoRow(
+                        label: 'Date of Birth',
+                        value: AppDateFormat.display(detail.dateOfBirth),
+                        labelWidth: 120,
+                      ),
                       InfoRow(label: 'Gender', value: detail.gender, labelWidth: 120),
                       InfoRow(label: 'School/Grade', value: detail.schoolNameGrade, labelWidth: 120),
                     ],
@@ -280,7 +285,11 @@ class ApplicationDetailSheet extends ConsumerWidget {
                     context,
                     title: 'Application Details',
                     rows: [
-                      InfoRow(label: 'Application Date', value: detail.applicationDate, labelWidth: 120),
+                      InfoRow(
+                        label: 'Application Date',
+                        value: AppDateFormat.display(detail.applicationDate),
+                        labelWidth: 120,
+                      ),
                       InfoRow(
                         label: 'Status',
                         value: detail.applicationStatus,
@@ -288,7 +297,11 @@ class ApplicationDetailSheet extends ConsumerWidget {
                         valueColor: detail.isEnrolled ? AppColors.success : AppColors.accentOrange,
                       ),
                       if (detail.viewedDate != null && detail.viewedDate!.isNotEmpty)
-                        InfoRow(label: 'Viewed Date', value: detail.viewedDate, labelWidth: 120),
+                        InfoRow(
+                          label: 'Viewed Date',
+                          value: AppDateFormat.display(detail.viewedDate),
+                          labelWidth: 120,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 24.0),

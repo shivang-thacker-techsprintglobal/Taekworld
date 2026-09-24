@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_text_style.dart';
+import '../../../../core/utils/app_date_format.dart';
 import '../../../../core/widgets/info_row.dart';
 import '../../domain/entities/trial_member_entity.dart';
 
@@ -109,8 +110,16 @@ class TrialMemberDetailSheet extends StatelessWidget {
                     InfoRow(label: 'Email', value: member.email, labelWidth: 120),
                     InfoRow(label: 'Phone', value: member.parentPhone, labelWidth: 120),
                     InfoRow(label: 'User Code', value: member.userCode, labelWidth: 120),
-                    InfoRow(label: 'Registration Date', value: member.registrationDate, labelWidth: 120),
-                    InfoRow(label: 'Trial Ends', value: member.trialEndDate, labelWidth: 120),
+                    InfoRow(
+                      label: 'Registration Date',
+                      value: AppDateFormat.display(member.registrationDate),
+                      labelWidth: 120,
+                    ),
+                    InfoRow(
+                      label: 'Trial Ends',
+                      value: AppDateFormat.display(member.trialEndDate),
+                      labelWidth: 120,
+                    ),
                     InfoRow(
                       label: 'Days Remaining',
                       value: member.isExpired ? 'Expired' : '${member.daysRemaining} days',

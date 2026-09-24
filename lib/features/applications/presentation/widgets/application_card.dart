@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_text_style.dart';
+import '../../../../core/utils/app_date_format.dart';
 import '../../domain/entities/application_item_entity.dart';
 
 /// Application Card widget per UI-SPEC §4.4.
@@ -142,7 +143,8 @@ class ApplicationCard extends StatelessWidget {
                                 const SizedBox(height: 2.0),
                                 // Green check only for viewed items; unviewed show Applied date.
                                 if (item.isViewed &&
-                                    item.viewedDateFormatted.isNotEmpty)
+                                    (item.viewedDateFormatted.isNotEmpty ||
+                                        (item.viewedDate?.isNotEmpty ?? false)))
                                   Row(
                                     children: [
                                       const Icon(
@@ -152,11 +154,7 @@ class ApplicationCard extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4.0),
                                       Text(
-                                        item.viewedDateFormatted
-                                                .toLowerCase()
-                                                .startsWith('viewed')
-                                            ? item.viewedDateFormatted
-                                            : 'Viewed on ${item.viewedDateFormatted}',
+                                        _viewedLabel(item),
                                         style: AppTextStyle.b3(
                                           context,
                                           color: AppColors.textSecondary,
@@ -166,7 +164,7 @@ class ApplicationCard extends StatelessWidget {
                                   )
                                 else if (item.applicationDate.isNotEmpty)
                                   Text(
-                                    'Applied: ${item.applicationDate}',
+                                    'Applied: ${AppDateFormat.display(item.applicationDate)}',
                                     style: AppTextStyle.b3(
                                       context,
                                       color: AppColors.textSecondary,
@@ -191,5 +189,20 @@ class ApplicationCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _viewedLabel(ApplicationItemEntity item) {
+    final raw = item.viewedDateFormatted.trim().isNotEmpty
+        ? item.viewedDateFormatted.trim()
+        : (item.viewedDate ?? '').trim();
+    if (raw.toLowerCase().startsWith('viewed')) {
+      // Already prefixed; still normalize any embedded date to M/D/YYYY.
+      final withoutPrefix = raw.replaceFirst(
+        RegExp(r'^viewed\s+on\s+', caseSensitive: false),
+        '',
+      );
+      return 'Viewed on ${AppDateFormat.display(withoutPrefix, fallback: withoutPrefix)}';
+    }
+    return 'Viewed on ${AppDateFormat.display(raw, fallback: raw)}';
   }
 }
