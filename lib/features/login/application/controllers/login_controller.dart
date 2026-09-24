@@ -15,6 +15,7 @@ class LoginController extends StateNotifier<LoginState> {
 
   final AuthRepository _repository;
   final Ref _ref;
+  bool _sessionExpiryInProgress = false;
 
   Future<void> restoreSession() async {
     state = const LoginState.checkingSession();
@@ -59,14 +60,29 @@ class LoginController extends StateNotifier<LoginState> {
     }
   }
 
+  /// User-initiated logout: delete-device → Auth/logout → clear → Login.
   Future<void> logout() async {
-    // Order: delete-device (needs Bearer) → Auth/logout → clear local.
     try {
       await _ref.read(pushNotificationServiceProvider).unregisterDevice();
     } catch (_) {}
     await _repository.logout();
     _ref.read(currentUserProvider.notifier).state = null;
     state = const LoginState.initial();
+  }
+
+  /// Forced sign-out after a non-refreshable 401 or failed refresh
+  /// (integration contract). Same cleanup as [logout]; guarded against re-entry
+  /// when logout's own API calls also return 401.
+  Future<void> onSessionExpired() async {
+    if (_sessionExpiryInProgress) return;
+    if (state is LoginInitial || state is LoginCheckingSession) return;
+
+    _sessionExpiryInProgress = true;
+    try {
+      await logout();
+    } finally {
+      _sessionExpiryInProgress = false;
+    }
   }
 
   void reset() {

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/current_user_provider.dart';
+import '../providers/session_expired_provider.dart';
 import '../storage/secure_session_storage.dart';
 import 'api.dart';
 import 'interceptors/auth_interceptor.dart';
@@ -112,7 +112,8 @@ final dioClientProvider = Provider<DioClient>((ref) {
   return DioClient(
     sessionStorage: storage,
     onSessionExpired: () {
-      ref.read(currentUserProvider.notifier).state = null;
+      // Signal only — AuthGate runs full logout (avoids provider cycle).
+      ref.read(sessionExpiredSignalProvider.notifier).state++;
     },
   );
 });

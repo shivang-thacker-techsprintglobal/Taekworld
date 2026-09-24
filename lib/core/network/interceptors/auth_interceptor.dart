@@ -10,7 +10,12 @@ abstract final class AuthInterceptorKeys {
   static const retried = 'authRetried';
 }
 
-/// Attaches Bearer tokens and refreshes once on 401.
+/// Attaches Bearer tokens and refreshes once on 401 + `Token-Expired: true`.
+///
+/// Per integration contract: refresh only when the response header
+/// `Token-Expired` is `true`. Any other 401, or a failed refresh, signs the
+/// user out (callback) without clearing storage first — logout still needs
+/// the Bearer token for `delete-device` / `Auth/logout`.
 ///
 /// Uses [QueuedInterceptor] so parallel 401s share a single refresh.
 class AuthInterceptor extends QueuedInterceptor {
@@ -66,10 +71,17 @@ class AuthInterceptor extends QueuedInterceptor {
       return;
     }
 
+    // Integration contract: refresh ONLY when Token-Expired: true.
+    // Any other 401 → sign out.
+    if (!_hasTokenExpiredHeader(err.response)) {
+      _onSessionExpired?.call();
+      handler.next(err);
+      return;
+    }
+
     try {
       final refreshed = await _refreshTokens();
       if (!refreshed) {
-        await _sessionStorage.clear();
         _onSessionExpired?.call();
         handler.next(err);
         return;
@@ -83,10 +95,17 @@ class AuthInterceptor extends QueuedInterceptor {
       final response = await _refreshDio.fetch<dynamic>(request);
       handler.resolve(response);
     } catch (_) {
-      await _sessionStorage.clear();
       _onSessionExpired?.call();
       handler.next(err);
     }
+  }
+
+  bool _hasTokenExpiredHeader(Response<dynamic>? response) {
+    if (response == null) return false;
+    final raw = response.headers.value('token-expired') ??
+        response.headers.value('Token-Expired');
+    if (raw == null) return false;
+    return raw.trim().toLowerCase() == 'true';
   }
 
   Future<bool> _refreshTokens() async {
@@ -98,8 +117,12 @@ class AuthInterceptor extends QueuedInterceptor {
       data: {'refreshToken': refreshToken},
     );
 
-    final data = response.data;
-    if (data == null) return false;
+    final raw = response.data;
+    if (raw == null) return false;
+
+    final data = raw['data'] is Map<String, dynamic>
+        ? raw['data'] as Map<String, dynamic>
+        : raw;
 
     final accessToken = data['token'] as String?;
     final newRefresh = data['refreshToken'] as String?;

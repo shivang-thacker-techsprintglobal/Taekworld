@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_text_style.dart';
+import '../../../../core/providers/session_expired_provider.dart';
 import '../../../main_shell/presentation/screens/main_shell_screen.dart';
 import '../../application/controllers/login_controller.dart';
 import '../../application/controllers/login_state.dart';
@@ -17,6 +20,12 @@ class AuthGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 401 without Token-Expired / failed refresh → full logout → Login.
+    ref.listen<int>(sessionExpiredSignalProvider, (previous, next) {
+      if (previous == next) return;
+      unawaited(ref.read(loginControllerProvider.notifier).onSessionExpired());
+    });
+
     final loginState = ref.watch(loginControllerProvider);
 
     return switch (loginState) {
