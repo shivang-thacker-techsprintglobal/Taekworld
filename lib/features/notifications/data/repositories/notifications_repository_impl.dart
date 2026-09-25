@@ -84,7 +84,7 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       return 0;
     }
 
-    if (pending.notifications.isEmpty) return 0;
+    if (pending.notifications.isEmpty) return pending.totalCount;
 
     final webUrl = masterPhone.trim().isNotEmpty
         ? 'https://www.blackbelthw.com/${masterPhone.trim()}'
@@ -111,7 +111,21 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
     // Defer mark-delivered until the inbox is actually displayed.
     await _local.enqueueUndeliveredIds(deliveredIds);
 
-    return pending.notifications.length;
+    return pending.totalCount;
+  }
+
+  @override
+  Future<int> getPendingTotalCount({required String dojangId}) async {
+    final deviceId = await _local.getOrCreateDeviceId();
+    try {
+      final pending = await _remote.getPending(
+        dojangId: dojangId,
+        deviceId: deviceId,
+      );
+      return pending.totalCount;
+    } catch (_) {
+      return 0;
+    }
   }
 
   @override

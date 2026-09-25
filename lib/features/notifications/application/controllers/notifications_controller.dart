@@ -1,6 +1,7 @@
 import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/current_user_provider.dart';
 import '../../../main_shell/application/shell_providers.dart';
 import '../../data/repositories/notifications_repository_impl.dart';
 import '../../domain/entities/app_notification_entity.dart';
@@ -23,12 +24,10 @@ class NotificationsController extends StateNotifier<NotificationsState> {
 
     try {
       final items = await _repository.getNotifications();
-      final newState = NotificationsSuccess(
+      state = NotificationsSuccess(
         notifications: items,
         isRefreshing: false,
       );
-      state = newState;
-      await _publishUnread(newState.unreadCount);
     } catch (_) {
       if (state is! NotificationsSuccess) {
         state = const NotificationsError('Failed to load notifications.');
@@ -48,17 +47,16 @@ class NotificationsController extends StateNotifier<NotificationsState> {
       final updated =
           current.notifications.map((n) => n.copyWith(isRead: true)).toList();
       state = current.copyWith(notifications: updated);
-      await _publishUnread(0);
     }
   }
 
-  /// Notifications tab opened: mark-delivered after inbox is shown.
-  /// Does **not** clear unread UI / badge — that happens on item tap or
-  /// explicit "Mark all as read".
+  /// Notifications tab opened: mark-delivered after inbox is shown, then
+  /// refresh badge from pending `totalCount`.
   Future<void> onInboxOpened() async {
     try {
       await _repository.markDisplayedAsDelivered();
     } catch (_) {}
+    await refreshPendingBadge();
   }
 
   Future<void> markAsRead(String id) async {
@@ -70,9 +68,7 @@ class NotificationsController extends StateNotifier<NotificationsState> {
         if (n.id == id) return n.copyWith(isRead: true);
         return n;
       }).toList();
-      final newState = current.copyWith(notifications: updated);
-      state = newState;
-      await _publishUnread(newState.unreadCount);
+      state = current.copyWith(notifications: updated);
     }
   }
 
@@ -81,21 +77,22 @@ class NotificationsController extends StateNotifier<NotificationsState> {
     if (state is NotificationsSuccess) {
       final current = state as NotificationsSuccess;
       final updated = current.notifications.where((n) => n.id != id).toList();
-      final newState = current.copyWith(notifications: updated);
-      state = newState;
-      await _publishUnread(newState.unreadCount);
+      state = current.copyWith(notifications: updated);
     }
   }
 
   Future<void> clearAll() async {
     await _repository.clearAll();
     state = const NotificationsSuccess(notifications: []);
-    await _publishUnread(0);
   }
 
-  Future<void> _publishUnread(int count) async {
-    _ref.read(notificationsBadgeProvider.notifier).state = count;
+  /// Badge = `pending.totalCount` from the server (not local unread).
+  Future<void> refreshPendingBadge() async {
+    final dojangId = _ref.read(currentUserProvider)?.academyId;
+    if (dojangId == null || dojangId.isEmpty) return;
     try {
+      final count = await _repository.getPendingTotalCount(dojangId: dojangId);
+      _ref.read(notificationsBadgeProvider.notifier).state = count;
       await AppBadgePlus.updateBadge(count);
     } catch (_) {}
   }

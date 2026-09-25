@@ -79,6 +79,10 @@ class PushNotificationService {
     _onOpenedSub =
         FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationOpen);
     _onTokenSub = messaging.onTokenRefresh.listen((token) async {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('FCM token (refresh): $token');
+      }
       await _local.saveFcmToken(token);
       await registerDeviceWithBackend(force: true);
     });
@@ -210,6 +214,10 @@ class PushNotificationService {
           final token = await FirebaseMessaging.instance.getToken();
           if (token == null || token.isEmpty) {
             throw StateError('FCM token unavailable');
+          }
+          if (kDebugMode) {
+            // ignore: avoid_print
+            print('FCM token (getToken): $token');
           }
 
           await _local.saveFcmToken(token);
@@ -405,8 +413,11 @@ class PushNotificationService {
       sound: const RawResourceAndroidNotificationSound('notification'),
       icon: '@drawable/ic_notification',
       color: const Color(0xFFFF0000),
+      // Plugin requires both durations when lights are enabled.
       enableLights: true,
       ledColor: const Color(0xFFFF0000),
+      ledOnMs: 1000,
+      ledOffMs: 500,
       styleInformation: BigTextStyleInformation(
         entity.message,
         contentTitle: entity.title,
@@ -423,14 +434,21 @@ class PushNotificationService {
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
-    await _localNotifications.show(
-      entity.id.hashCode,
-      entity.title,
-      entity.message,
-      NotificationDetails(android: androidDetails, iOS: iosDetails),
-      payload:
-          '${entity.type}|${entity.url ?? ''}|${entity.id}|${entity.entityId ?? ''}',
-    );
+    try {
+      await _localNotifications.show(
+        entity.id.hashCode,
+        entity.title,
+        entity.message,
+        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload:
+            '${entity.type}|${entity.url ?? ''}|${entity.id}|${entity.entityId ?? ''}',
+      );
+    } catch (e) {
+      // Never take down the app for a heads-up failure (e.g. LED config).
+      if (kDebugMode) {
+        debugPrint('Local heads-up failed: $e');
+      }
+    }
   }
 
   Future<void> _routeNotificationTap({
@@ -464,15 +482,24 @@ class PushNotificationService {
     _ref.read(pendingBrowserOpenProvider.notifier).state = url;
   }
 
+  /// Nav / launcher badge = `GET …/pending` `totalCount` (not local unread).
   Future<void> _syncAppBadge() async {
-    final unread = await _ref.read(notificationsRepositoryProvider).unreadCount();
-    _ref.read(notificationsBadgeProvider.notifier).state = unread;
+    final user = _ref.read(currentUserProvider);
+    final dojangId = user?.academyId;
+    if (dojangId == null || dojangId.isEmpty) return;
+
+    var count = 0;
     try {
-      if (unread <= 0) {
-        await AppBadgePlus.updateBadge(0);
-      } else {
-        await AppBadgePlus.updateBadge(unread);
-      }
+      count = await _ref
+          .read(notificationsRepositoryProvider)
+          .getPendingTotalCount(dojangId: dojangId);
+    } catch (_) {
+      return;
+    }
+
+    _ref.read(notificationsBadgeProvider.notifier).state = count;
+    try {
+      await AppBadgePlus.updateBadge(count);
     } catch (_) {}
   }
 
