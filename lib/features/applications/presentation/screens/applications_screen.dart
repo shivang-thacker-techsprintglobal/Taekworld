@@ -164,7 +164,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
             tooltip: 'Refresh',
             onPressed: isRefreshing
                 ? null
-                : () => _loadData(isSilent: state is ApplicationsSuccess),
+                : () => _loadData(isSilent: false),
             icon: isRefreshing
                 ? const SizedBox(
                     width: 22,

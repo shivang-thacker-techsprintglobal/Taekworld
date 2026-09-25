@@ -15,11 +15,14 @@ class ApplicationsController extends StateNotifier<ApplicationsState> {
   final Ref _ref;
 
   Future<void> loadApplications(String dojangId, {bool isSilent = false}) async {
-    // Keep list visible while refreshing (same as Trial Members / UI-SPEC).
+    // Silent = background refresh (push / timer): keep UI unchanged.
+    // Non-silent with existing data = app-bar refresh indicator only.
     if (state is ApplicationsSuccess) {
-      final current = state as ApplicationsSuccess;
-      if (!current.isRefreshing) {
-        state = current.copyWith(isRefreshing: true);
+      if (!isSilent) {
+        final current = state as ApplicationsSuccess;
+        if (!current.isRefreshing) {
+          state = current.copyWith(isRefreshing: true);
+        }
       }
     } else if (!isSilent) {
       state = const ApplicationsLoading();

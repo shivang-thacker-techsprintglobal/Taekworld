@@ -15,8 +15,8 @@ class TrialMembersController extends StateNotifier<TrialMembersState> {
 
   /// Loads trial members.
   ///
-  /// When data is already on screen, never swaps to a full-screen loader —
-  /// refreshes stay non-blocking (UI-SPEC §4.6), same pattern as Applications.
+  /// [isSilent] background refreshes (push / timer) never show a loader.
+  /// Manual refresh with data already on screen uses the app-bar spinner only.
   Future<void> loadTrialMembers(String dojangId, {bool isSilent = false}) async {
     final hasData = state is TrialMembersSuccess;
 
@@ -24,7 +24,7 @@ class TrialMembersController extends StateNotifier<TrialMembersState> {
       if (!isSilent) {
         state = const TrialMembersLoading();
       }
-    } else {
+    } else if (!isSilent) {
       final current = state as TrialMembersSuccess;
       if (!current.isRefreshing) {
         state = current.copyWith(isRefreshing: true);

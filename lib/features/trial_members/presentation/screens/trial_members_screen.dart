@@ -133,7 +133,7 @@ class _TrialMembersScreenState extends ConsumerState<TrialMembersScreen> {
             tooltip: 'Refresh',
             onPressed: isRefreshing
                 ? null
-                : () => _loadData(isSilent: state is TrialMembersSuccess),
+                : () => _loadData(isSilent: false),
             icon: isRefreshing
                 ? const SizedBox(
                     width: 22,
